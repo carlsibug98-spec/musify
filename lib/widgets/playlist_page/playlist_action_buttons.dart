@@ -93,7 +93,7 @@ class PlaylistActionButtons extends StatelessWidget {
               textStyle: labelStyle,
             ),
             icon: isLoading
-                ? const _Spinner(color: Colors.white)
+                ? _Spinner(color: Daylight.onAccent)
                 : const Icon(FluentIcons.play_24_filled, size: 14),
             label: Text(context.l10n!.play),
             onPressed: isLoading ? null : onPlay,
@@ -204,7 +204,7 @@ class PlaylistActionButtons extends StatelessWidget {
             width: 56,
             height: 56,
             child: isLoading
-                ? const _Spinner(color: Colors.white)
+                ? _Spinner(color: Daylight.onAccent)
                 : Icon(
                     FluentIcons.play_24_filled,
                     size: 26,

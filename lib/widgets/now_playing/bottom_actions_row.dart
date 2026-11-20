@@ -91,36 +91,41 @@ class BottomActionsRow extends StatelessWidget {
       valueListenable: sleepTimerNotifier,
       builder: (_, remaining, __) {
         final isActive = remaining != null;
-        return IconButton(
-          icon: Icon(
-            isActive
-                ? FluentIcons.timer_24_filled
-                : FluentIcons.timer_24_regular,
-            size: iconSize,
-            color: isActive ? Daylight.cobalt : Daylight.muted,
+        return Semantics(
+          button: true,
+          selected: isActive,
+          label: context.l10n!.sleepTimer,
+          child: IconButton(
+            icon: Icon(
+              isActive
+                  ? FluentIcons.timer_24_filled
+                  : FluentIcons.timer_24_regular,
+              size: iconSize,
+              color: isActive ? Daylight.cobalt : Daylight.muted,
+            ),
+            tooltip: context.l10n!.sleepTimer,
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            style: IconButton.styleFrom(
+              backgroundColor: isActive
+                  ? Daylight.cobaltSoft
+                  : Colors.transparent,
+              shape: const CircleBorder(),
+            ),
+            onPressed: () {
+              if (isActive) {
+                audioHandler.cancelSleepTimer();
+                sleepTimerNotifier.value = null;
+                showToast(
+                  context,
+                  context.l10n!.sleepTimerCancelled,
+                  duration: const Duration(seconds: 1, milliseconds: 500),
+                );
+              } else {
+                showSleepTimerDialog(context);
+              }
+            },
           ),
-          tooltip: context.l10n!.sleepTimer,
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-          style: IconButton.styleFrom(
-            backgroundColor: isActive
-                ? Daylight.cobaltSoft
-                : Colors.transparent,
-            shape: const CircleBorder(),
-          ),
-          onPressed: () {
-            if (isActive) {
-              audioHandler.cancelSleepTimer();
-              sleepTimerNotifier.value = null;
-              showToast(
-                context,
-                context.l10n!.sleepTimerCancelled,
-                duration: const Duration(seconds: 1, milliseconds: 500),
-              );
-            } else {
-              showSleepTimerDialog(context);
-            }
-          },
         );
       },
     );

@@ -400,7 +400,7 @@ class DaylightPill extends StatelessWidget {
               label,
               style: Daylight.ui(
                 11,
-                color: selected ? Daylight.onAccent : const Color(0xFF3C4250),
+                color: selected ? Daylight.onAccent : Daylight.ink,
                 weight: selected ? FontWeight.w600 : FontWeight.w500,
                 height: 1.1,
               ),

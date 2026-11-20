@@ -388,9 +388,11 @@ abstract final class Daylight {
         textStyle: ui(13, weight: FontWeight.w500),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: ink,
-        contentTextStyle: ui(13, color: Colors.white),
-        actionTextColor: const Color(0xFF9DB0FF),
+        // Use the accent as the surface and its computed readable foreground,
+        // so the message and action stay legible in BOTH light and dark modes.
+        backgroundColor: cobalt,
+        contentTextStyle: ui(13, color: onAccent),
+        actionTextColor: onAccent,
         behavior: SnackBarBehavior.floating,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

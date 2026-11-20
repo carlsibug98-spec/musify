@@ -106,73 +106,82 @@ class _PlaylistLikeButtonState extends State<PlaylistLikeButton> {
         if (widget.asPill) {
           return Tooltip(
             message: tooltip,
-            child: GestureDetector(
-              onTap: _toggleLikeStatus,
-              child: AnimatedContainer(
-                duration: Daylight.motion(
-                  context,
-                  const Duration(milliseconds: 180),
-                ),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 11,
-                ),
-                decoration: BoxDecoration(
-                  color: isLiked ? Daylight.cobalt : Daylight.card,
-                  borderRadius: BorderRadius.circular(999),
-                  border: isLiked
-                      ? null
-                      : Border.all(color: Daylight.lineStrong),
-                  boxShadow: isLiked ? Daylight.cobaltShadow : null,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isLiked
-                          ? FluentIcons.heart_24_filled
-                          : FluentIcons.heart_24_regular,
-                      size: 17,
-                      color: isLiked ? Daylight.onAccent : Daylight.ink,
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      isLiked ? context.l10n!.liked : context.l10n!.like,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Daylight.ui(
-                        12,
+            child: Semantics(
+              button: true,
+              selected: isLiked,
+              label: tooltip,
+              child: GestureDetector(
+                onTap: _toggleLikeStatus,
+                child: AnimatedContainer(
+                  duration: Daylight.motion(
+                    context,
+                    const Duration(milliseconds: 180),
+                  ),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 11,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isLiked ? Daylight.cobalt : Daylight.card,
+                    borderRadius: BorderRadius.circular(999),
+                    border: isLiked
+                        ? null
+                        : Border.all(color: Daylight.lineStrong),
+                    boxShadow: isLiked ? Daylight.cobaltShadow : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isLiked
+                            ? FluentIcons.heart_24_filled
+                            : FluentIcons.heart_24_regular,
+                        size: 17,
                         color: isLiked ? Daylight.onAccent : Daylight.ink,
-                        weight: FontWeight.w600,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 7),
+                      Text(
+                        isLiked ? context.l10n!.liked : context.l10n!.like,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Daylight.ui(
+                          12,
+                          color: isLiked ? Daylight.onAccent : Daylight.ink,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           );
         }
 
-        return IconButton(
-          icon: Icon(
-            isLiked
-                ? FluentIcons.heart_24_filled
-                : FluentIcons.heart_24_regular,
-            size: 18,
-            color: isLiked ? Daylight.onAccent : Daylight.cobalt,
+        return Semantics(
+          button: true,
+          selected: isLiked,
+          child: IconButton(
+            icon: Icon(
+              isLiked
+                  ? FluentIcons.heart_24_filled
+                  : FluentIcons.heart_24_regular,
+              size: 18,
+              color: isLiked ? Daylight.onAccent : Daylight.cobalt,
+            ),
+            style: IconButton.styleFrom(
+              fixedSize: const Size(48, 48),
+              backgroundColor: isLiked ? Daylight.cobalt : Daylight.card,
+              shape: const CircleBorder(),
+              side: isLiked
+                  ? BorderSide.none
+                  : BorderSide(color: Daylight.lineStrong),
+              elevation: 0,
+            ),
+            onPressed: _toggleLikeStatus,
+            tooltip: tooltip,
           ),
-          style: IconButton.styleFrom(
-            fixedSize: const Size(48, 48),
-            backgroundColor: isLiked ? Daylight.cobalt : Daylight.card,
-            shape: const CircleBorder(),
-            side: isLiked
-                ? BorderSide.none
-                : BorderSide(color: Daylight.lineStrong),
-            elevation: 0,
-          ),
-          onPressed: _toggleLikeStatus,
-          tooltip: tooltip,
         );
       },
     );

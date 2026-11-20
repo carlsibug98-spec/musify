@@ -340,28 +340,33 @@ class PlayerControlButtons extends StatelessWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: shuffleNotifier,
       builder: (_, value, __) {
-        return IconButton(
-          icon: Icon(
-            value
-                ? FluentIcons.arrow_shuffle_24_filled
-                : FluentIcons.arrow_shuffle_24_regular,
-            color: value ? Daylight.cobalt : Daylight.muted,
-          ),
-          tooltip: context.l10n!.shuffle,
-          iconSize: size,
-          constraints: buttonConstraints,
-          padding: buttonPadding,
-          style: IconButton.styleFrom(
-            backgroundColor: value ? Daylight.cobaltSoft : Colors.transparent,
-            shape: const CircleBorder(),
-          ),
-          onPressed: () {
-            audioHandler.setShuffleMode(
+        return Semantics(
+          button: true,
+          selected: value,
+          label: context.l10n!.shuffle,
+          child: IconButton(
+            icon: Icon(
               value
-                  ? AudioServiceShuffleMode.none
-                  : AudioServiceShuffleMode.all,
-            );
-          },
+                  ? FluentIcons.arrow_shuffle_24_filled
+                  : FluentIcons.arrow_shuffle_24_regular,
+              color: value ? Daylight.cobalt : Daylight.muted,
+            ),
+            tooltip: context.l10n!.shuffle,
+            iconSize: size,
+            constraints: buttonConstraints,
+            padding: buttonPadding,
+            style: IconButton.styleFrom(
+              backgroundColor: value ? Daylight.cobaltSoft : Colors.transparent,
+              shape: const CircleBorder(),
+            ),
+            onPressed: () {
+              audioHandler.setShuffleMode(
+                value
+                    ? AudioServiceShuffleMode.none
+                    : AudioServiceShuffleMode.all,
+              );
+            },
+          ),
         );
       },
     );
@@ -380,34 +385,41 @@ class PlayerControlButtons extends StatelessWidget {
       builder: (_, mode, __) {
         final isActive = mode != AudioServiceRepeatMode.none;
         final isOne = mode == AudioServiceRepeatMode.one;
-        return IconButton(
-          icon: Icon(
-            isOne
-                ? FluentIcons.arrow_repeat_1_24_filled
-                : isActive
-                ? FluentIcons.arrow_repeat_all_24_filled
-                : FluentIcons.arrow_repeat_all_24_regular,
-            color: isActive ? Daylight.cobalt : Daylight.muted,
+        return Semantics(
+          button: true,
+          selected: isActive,
+          // The icon already shows off/all/one; TalkBack gets the state via
+          // `selected`, and the label names the action.
+          label: context.l10n!.repeat,
+          child: IconButton(
+            icon: Icon(
+              isOne
+                  ? FluentIcons.arrow_repeat_1_24_filled
+                  : isActive
+                  ? FluentIcons.arrow_repeat_all_24_filled
+                  : FluentIcons.arrow_repeat_all_24_regular,
+              color: isActive ? Daylight.cobalt : Daylight.muted,
+            ),
+            tooltip: context.l10n!.repeat,
+            iconSize: size,
+            constraints: buttonConstraints,
+            padding: buttonPadding,
+            style: IconButton.styleFrom(
+              backgroundColor: isActive
+                  ? Daylight.cobaltSoft
+                  : Colors.transparent,
+              shape: const CircleBorder(),
+            ),
+            onPressed: () {
+              final next = switch (mode) {
+                AudioServiceRepeatMode.none => AudioServiceRepeatMode.all,
+                AudioServiceRepeatMode.all => AudioServiceRepeatMode.one,
+                _ => AudioServiceRepeatMode.none,
+              };
+              repeatNotifier.value = next;
+              unawaited(audioHandler.setRepeatMode(next));
+            },
           ),
-          tooltip: context.l10n!.repeat,
-          iconSize: size,
-          constraints: buttonConstraints,
-          padding: buttonPadding,
-          style: IconButton.styleFrom(
-            backgroundColor: isActive
-                ? Daylight.cobaltSoft
-                : Colors.transparent,
-            shape: const CircleBorder(),
-          ),
-          onPressed: () {
-            final next = switch (mode) {
-              AudioServiceRepeatMode.none => AudioServiceRepeatMode.all,
-              AudioServiceRepeatMode.all => AudioServiceRepeatMode.one,
-              _ => AudioServiceRepeatMode.none,
-            };
-            repeatNotifier.value = next;
-            unawaited(audioHandler.setRepeatMode(next));
-          },
         );
       },
     );

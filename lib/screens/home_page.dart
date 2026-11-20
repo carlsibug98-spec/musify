@@ -134,9 +134,9 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
                 _buildQuickAccess(context),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 _buildFilterChips(context),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 if (_filter != _HomeFilter.songs)
                   GenreGrid(
                     title: context.l10n!.genres,
@@ -146,12 +146,12 @@ class _HomePageState extends State<HomePage> {
                       context.go('/search');
                     },
                   ),
-                if (_filter != _HomeFilter.songs) const SizedBox(height: 18),
+                if (_filter != _HomeFilter.songs) const SizedBox(height: 14),
                 if (_filter != _HomeFilter.playlists) _buildJumpBackIn(),
                 if (_filter != _HomeFilter.playlists)
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
                 if (_filter != _HomeFilter.songs) _buildSuggestedPlaylists(),
-                if (_filter != _HomeFilter.songs) const SizedBox(height: 16),
+                if (_filter != _HomeFilter.songs) const SizedBox(height: 12),
                 if (_filter != _HomeFilter.songs) _buildLikedPlaylists(),
                 if (_filter != _HomeFilter.playlists) _buildMonthRecap(),
                 if (_filter != _HomeFilter.playlists)
@@ -177,29 +177,43 @@ class _HomePageState extends State<HomePage> {
         userLikedSongsList,
       ]),
       builder: (context, _) {
-        final tiles = <Widget>[
-          _QuickAccessTile(
-            label: context.l10n!.likedSongs,
-            caption: '${userLikedSongsList.value.length}',
-            icon: FluentIcons.heart_24_filled,
-            color: BrowseColors.rose,
-            onTap: () => context.push('/library/userSongs/liked'),
-          ),
-          _QuickAccessTile(
-            label: context.l10n!.downloads,
-            caption: '${userOfflineSongs.value.length}',
-            icon: FluentIcons.arrow_download_24_regular,
-            color: BrowseColors.pine,
-            onTap: () => context.push('/library/downloads'),
-          ),
-          _QuickAccessTile(
-            label: context.l10n!.recentlyPlayed,
-            caption: '${userRecentlyPlayed.value.length}',
-            icon: FluentIcons.history_24_regular,
-            color: BrowseColors.teal,
-            onTap: () => context.push('/library/userSongs/recents'),
-          ),
-        ];
+        // Only surface a collection once the user actually has something in
+        // it. A brand-new account sees their real playlists (or nothing) rather
+        // than three empty "Liked / Downloads / Recents" placeholders.
+        final tiles = <Widget>[];
+        if (userLikedSongsList.value.isNotEmpty) {
+          tiles.add(
+            _QuickAccessTile(
+              label: context.l10n!.likedSongs,
+              caption: '${userLikedSongsList.value.length}',
+              icon: FluentIcons.heart_24_filled,
+              color: BrowseColors.rose,
+              onTap: () => context.push('/library/userSongs/liked'),
+            ),
+          );
+        }
+        if (userOfflineSongs.value.isNotEmpty) {
+          tiles.add(
+            _QuickAccessTile(
+              label: context.l10n!.downloads,
+              caption: '${userOfflineSongs.value.length}',
+              icon: FluentIcons.arrow_download_24_regular,
+              color: BrowseColors.pine,
+              onTap: () => context.push('/library/downloads'),
+            ),
+          );
+        }
+        if (userRecentlyPlayed.value.isNotEmpty) {
+          tiles.add(
+            _QuickAccessTile(
+              label: context.l10n!.recentlyPlayed,
+              caption: '${userRecentlyPlayed.value.length}',
+              icon: FluentIcons.history_24_regular,
+              color: BrowseColors.teal,
+              onTap: () => context.push('/library/userSongs/recents'),
+            ),
+          );
+        }
 
         final playlists = getPlaylistsNotInFolders()
             .where((playlist) => playlist['ytid'] != null)
@@ -220,11 +234,13 @@ class _HomePageState extends State<HomePage> {
           );
         }
 
+        if (tiles.isEmpty) return const SizedBox.shrink();
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DaylightSectionHeader(title: context.l10n!.yourLibrary),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
