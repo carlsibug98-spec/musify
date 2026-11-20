@@ -99,7 +99,10 @@ class _SongQuickActionsState extends State<SongQuickActions> {
               customBorder: const CircleBorder(),
               child: Center(
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
+                  duration: Daylight.motion(
+                    context,
+                    const Duration(milliseconds: 180),
+                  ),
                   switchInCurve: Curves.easeOut,
                   switchOutCurve: Curves.easeOut,
                   transitionBuilder: (child, animation) => ScaleTransition(

@@ -180,7 +180,7 @@ class PlaylistActionButtons extends StatelessWidget {
           color: filled ? Daylight.onAccent : Daylight.cobalt,
         ),
         onPressed: onTap,
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
         padding: const EdgeInsets.all(8),
         style: IconButton.styleFrom(
           backgroundColor: filled ? Daylight.cobalt : Daylight.cobaltSoft,

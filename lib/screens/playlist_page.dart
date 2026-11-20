@@ -760,31 +760,36 @@ class _PlaylistPageState extends State<PlaylistPage> {
     final playlistId = _playlist['ytid'];
     if (mounted) {
       setState(() {});
-      showToastWithButton(
-        context,
-        context.l10n!.songRemoved,
-        context.l10n!.undo.toUpperCase(),
-        () {
-          final result = addSongInCustomPlaylist(
-            context,
-            playlistId,
-            songToRemove,
-            indexToInsert: indexToRestore,
-          );
-          if (result == context.l10n!.songAdded &&
-              !_originalPlaylistList.any(
-                (song) => song['ytid'] == songToRemove['ytid'],
-              )) {
-            final safeIndex = indexToRestore.clamp(
-              0,
-              _originalPlaylistList.length,
-            );
-            _originalPlaylistList.insert(safeIndex, songToRemove);
-            _applySort();
-          }
-          if (mounted) setState(() {});
-        },
-      );
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(context.l10n!.songRemoved),
+            action: SnackBarAction(
+              label: context.l10n!.undo.toUpperCase(),
+              onPressed: () {
+                final result = addSongInCustomPlaylist(
+                  context,
+                  playlistId,
+                  songToRemove,
+                  indexToInsert: indexToRestore,
+                );
+                if (result == context.l10n!.songAdded &&
+                    !_originalPlaylistList.any(
+                      (song) => song['ytid'] == songToRemove['ytid'],
+                    )) {
+                  final safeIndex = indexToRestore.clamp(
+                    0,
+                    _originalPlaylistList.length,
+                  );
+                  _originalPlaylistList.insert(safeIndex, songToRemove);
+                  _applySort();
+                }
+                if (mounted) setState(() {});
+              },
+            ),
+          ),
+        );
     } else {
       logger.log(
         '(_updateSongsListOnRemove): Widget not mounted, cannot show undo toast.',
