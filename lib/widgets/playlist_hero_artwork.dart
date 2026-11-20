@@ -47,9 +47,11 @@ class PlaylistHeroArtwork extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenSize = MediaQuery.sizeOf(context);
-        final preferredSize = screenSize.width > screenSize.height
-            ? 180.0
-            : 148.0;
+        // Albums get a large square cover that fills the expanded header;
+        // playlists keep the compact circular cover.
+        final preferredSize = square
+            ? math.min(screenSize.width * 0.72, 300.0)
+            : (screenSize.width > screenSize.height ? 180.0 : 148.0);
         final size = preferredSize
             .clamp(0.0, math.min(constraints.maxWidth, constraints.maxHeight))
             .toDouble();
@@ -88,7 +90,7 @@ class PlaylistHeroArtwork extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
+            border: Border.all(color: Daylight.card, width: 3),
             boxShadow: [
               BoxShadow(
                 color: Daylight.ink.withValues(alpha: 0.18),

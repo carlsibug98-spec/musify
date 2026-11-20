@@ -367,7 +367,7 @@ class DaylightPill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: Daylight.motion(context, const Duration(milliseconds: 180)),
         curve: Curves.easeOut,
         padding: padding,
         decoration: BoxDecoration(
@@ -639,7 +639,7 @@ class DaylightToggle extends StatelessWidget {
     return GestureDetector(
       onTap: onChanged == null ? null : () => onChanged!(!value),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: Daylight.motion(context, const Duration(milliseconds: 180)),
         curve: Curves.easeOut,
         width: 42,
         height: 24,
@@ -649,7 +649,7 @@ class DaylightToggle extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
         ),
         child: AnimatedAlign(
-          duration: const Duration(milliseconds: 180),
+          duration: Daylight.motion(context, const Duration(milliseconds: 180)),
           curve: Curves.easeOut,
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(

@@ -188,8 +188,9 @@ class _LyricsPageState extends State<LyricsPage> {
           const SizedBox(width: 8),
           DaylightPill(
             label: 'Aa',
-            onTap: () =>
-                setState(() => _textSize = _textSize >= 22 ? 15 : _textSize + 2),
+            onTap: () => setState(
+              () => _textSize = _textSize >= 22 ? 15 : _textSize + 2,
+            ),
           ),
           const Spacer(),
           DaylightPill(
@@ -292,9 +293,7 @@ class _LyricsPageState extends State<LyricsPage> {
         foregroundColor: Daylight.ink,
         backgroundColor: Daylight.cardTint,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       ),
     );
   }
@@ -615,7 +614,7 @@ class _SyncedLyricsViewState extends State<_SyncedLyricsView> {
           audioHandler.seek(target);
         },
         child: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 220),
+          duration: Daylight.motion(context, const Duration(milliseconds: 220)),
           curve: Curves.easeOut,
           style: Daylight.display(
             isActive ? widget.textSize + 2.5 : widget.textSize,

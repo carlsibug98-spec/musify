@@ -42,8 +42,30 @@ class AlbumMetadata {
 String _normalize(String value) =>
     value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
 
-String _cacheKey(String title, String? artist) =>
-    'albumMeta_${_normalize(artist == null ? title : '$title $artist')}';
+/// A conservative title match: exact, or the same words with at most one
+/// differing word and no short substring matches. This prevents a short album
+/// like "Lia" from matching an unrelated "Tom Bailey" release.
+bool _titlesMatch(String a, String b) {
+  if (a == b) return true;
+  if (a.isEmpty || b.isEmpty) return false;
+  final aWords = a.split(' ');
+  final bWords = b.split(' ');
+  if (aWords.length != bWords.length) return false;
+  var diff = 0;
+  for (var i = 0; i < aWords.length; i++) {
+    if (aWords[i] != bWords[i]) diff++;
+  }
+  return diff == 1 && aWords.length > 1;
+}
+
+String _cacheKey(String title, String? artist, String? expectedArtist) {
+  final parts = <String>[title];
+  if (artist != null && artist.isNotEmpty) parts.add(artist);
+  if (expectedArtist != null && expectedArtist.isNotEmpty) {
+    parts.add(expectedArtist);
+  }
+  return 'albumMeta_${_normalize(parts.join(' '))}';
+}
 
 /// Looks up real album metadata for [title]. Musify album titles are often
 /// "Album - Artist", so a trailing artist is split out to improve the match.
@@ -51,6 +73,7 @@ String _cacheKey(String title, String? artist) =>
 Future<AlbumMetadata?> fetchAlbumMetadata(
   String title, {
   String? artist,
+  String? expectedArtist,
   http.Client? client,
 }) async {
   final box = Hive.box('userNoBackup');
@@ -63,23 +86,37 @@ Future<AlbumMetadata?> fetchAlbumMetadata(
     hint ??= rawTitle.substring(dash + 3).trim();
     rawTitle = rawTitle.substring(0, dash).trim();
   }
-  final key = _cacheKey(title, artist);
+  final key = _cacheKey(title, artist, expectedArtist);
 
   final cached = box.get(key);
   if (cached is String && cached.isNotEmpty) {
     try {
       final decoded = jsonDecode(cached) as Map<String, dynamic>;
-      return AlbumMetadata(
-        artist: decoded['artist']?.toString() ?? '',
-        releaseDate: decoded['date'] != null
-            ? DateTime.tryParse(decoded['date'].toString())
-            : null,
-        artworkUrl: decoded['art']?.toString(),
-      );
+      final cachedArtist = decoded['artist']?.toString() ?? '';
+      // A cached value from an older, looser match can be wrong. If we now
+      // know the real artist, discard a cache entry that disagrees with it.
+      final knownArtist = _normalize(expectedArtist ?? hint ?? '');
+      final cachedNorm = _normalize(cachedArtist);
+      if (knownArtist.isEmpty ||
+          cachedNorm.isEmpty ||
+          cachedNorm.contains(knownArtist) ||
+          knownArtist.contains(cachedNorm)) {
+        return AlbumMetadata(
+          artist: cachedArtist,
+          releaseDate: decoded['date'] != null
+              ? DateTime.tryParse(decoded['date'].toString())
+              : null,
+          artworkUrl: decoded['art']?.toString(),
+        );
+      }
     } catch (_) {}
   }
 
-  final query = hint == null || hint.isEmpty ? rawTitle : '$rawTitle $hint';
+  // Include the known artist in the search so iTunes returns the right album.
+  final searchArtist = hint?.isNotEmpty == true ? hint : expectedArtist;
+  final query = searchArtist == null || searchArtist.isEmpty
+      ? rawTitle
+      : '$rawTitle $searchArtist';
   if (query.isEmpty) return null;
 
   final httpClient = client ?? http.Client();
@@ -100,16 +137,27 @@ Future<AlbumMetadata?> fetchAlbumMetadata(
     if (results is! List || results.isEmpty) return null;
 
     final wanted = _normalize(rawTitle);
+    final wantedArtist = _normalize(expectedArtist ?? hint ?? '');
+
     Map? best;
     for (final item in results) {
       if (item is! Map) continue;
       final name = _normalize(item['collectionName']?.toString() ?? '');
-      if (name.contains(wanted) || wanted.contains(name)) {
-        best = item;
-        break;
+      if (!_titlesMatch(wanted, name)) continue;
+      // If the album's real artist is known, require it to agree. A wrong
+      // artist is worse than showing no metadata at all.
+      if (wantedArtist.isNotEmpty) {
+        final itemArtist = _normalize(item['artistName']?.toString() ?? '');
+        if (itemArtist.isNotEmpty &&
+            !itemArtist.contains(wantedArtist) &&
+            !wantedArtist.contains(itemArtist)) {
+          continue;
+        }
       }
+      best = item;
+      break;
     }
-    best ??= results.firstWhere((item) => item is Map, orElse: () => null);
+    // No loose fallback: ambiguous results are simply omitted.
     if (best == null) return null;
 
     final meta = AlbumMetadata(

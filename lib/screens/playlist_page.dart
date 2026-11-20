@@ -182,7 +182,14 @@ class _PlaylistPageState extends State<PlaylistPage> {
         _adoptPlaylist(_playlist);
       }
       if (_isAlbumView && !offlineMode.value) {
-        _albumMeta = await fetchAlbumMetadata(_playlistTitle);
+        final list = _playlist['list'] as List? ?? const [];
+        final firstArtist = list.isNotEmpty && list.first is Map
+            ? list.first['artist']?.toString()
+            : null;
+        _albumMeta = await fetchAlbumMetadata(
+          _playlistTitle,
+          expectedArtist: firstArtist,
+        );
         if (mounted) setState(() {});
       }
       _maybeLoadRecommendations();
@@ -586,8 +593,8 @@ class _PlaylistPageState extends State<PlaylistPage> {
     return IconButton(
       icon: Icon(icon, size: 17, color: Daylight.cobalt),
       style: IconButton.styleFrom(
-        fixedSize: const Size(38, 38),
-        backgroundColor: Colors.white,
+        fixedSize: const Size(48, 48),
+        backgroundColor: Daylight.card,
         shape: const CircleBorder(),
         side: BorderSide(color: Daylight.lineStrong),
       ),

@@ -273,8 +273,8 @@ class _UserSongsPageState extends State<UserSongsPage> {
         color: Daylight.cobalt,
       ),
       style: IconButton.styleFrom(
-        fixedSize: const Size(38, 38),
-        backgroundColor: Colors.white,
+        fixedSize: const Size(48, 48),
+        backgroundColor: Daylight.card,
         shape: const CircleBorder(),
         side: BorderSide(color: Daylight.lineStrong),
       ),

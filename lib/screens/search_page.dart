@@ -352,7 +352,10 @@ class _SearchPageState extends State<SearchPage> {
               child: Column(
                 children: <Widget>[
                   AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
+                    duration: Daylight.motion(
+                      context,
+                      const Duration(milliseconds: 200),
+                    ),
                     child:
                         (_suggestionsList.isNotEmpty ||
                             (_songsSearchResult.isEmpty &&
@@ -549,7 +552,7 @@ class _SearchPageState extends State<SearchPage> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Daylight.card,
           borderRadius: BorderRadius.circular(16),
           border: Daylight.hairline,
           boxShadow: Daylight.cardShadow,

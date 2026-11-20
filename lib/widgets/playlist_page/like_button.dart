@@ -109,14 +109,17 @@ class _PlaylistLikeButtonState extends State<PlaylistLikeButton> {
             child: GestureDetector(
               onTap: _toggleLikeStatus,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+                duration: Daylight.motion(
+                  context,
+                  const Duration(milliseconds: 180),
+                ),
                 curve: Curves.easeOut,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 11,
                 ),
                 decoration: BoxDecoration(
-                  color: isLiked ? Daylight.cobalt : Colors.white,
+                  color: isLiked ? Daylight.cobalt : Daylight.card,
                   borderRadius: BorderRadius.circular(999),
                   border: isLiked
                       ? null
@@ -157,11 +160,11 @@ class _PlaylistLikeButtonState extends State<PlaylistLikeButton> {
                 ? FluentIcons.heart_24_filled
                 : FluentIcons.heart_24_regular,
             size: 18,
-            color: isLiked ? Colors.white : Daylight.cobalt,
+            color: isLiked ? Daylight.onAccent : Daylight.cobalt,
           ),
           style: IconButton.styleFrom(
-            fixedSize: const Size(42, 42),
-            backgroundColor: isLiked ? Daylight.cobalt : Colors.white,
+            fixedSize: const Size(48, 48),
+            backgroundColor: isLiked ? Daylight.cobalt : Daylight.card,
             shape: const CircleBorder(),
             side: isLiked
                 ? BorderSide.none

@@ -85,12 +85,12 @@ class _SongQuickActionsState extends State<SongQuickActions> {
         height: 40,
         child: PressScale(
           child: Material(
-            color: active ? Daylight.cobalt : Colors.white,
+            color: active ? Daylight.cobalt : Daylight.card,
             shape: CircleBorder(
               side: BorderSide(
                 color: active
                     ? Colors.transparent
-                    : Daylight.ink.withValues(alpha: 0.06),
+                    : Daylight.lineStrong.withValues(alpha: 0.5),
               ),
             ),
             clipBehavior: Clip.antiAlias,
@@ -112,7 +112,7 @@ class _SongQuickActionsState extends State<SongQuickActions> {
                         : FluentIcons.add_24_regular,
                     key: ValueKey(active),
                     size: 20,
-                    color: active ? Colors.white : Daylight.ink,
+                    color: active ? Daylight.onAccent : Daylight.ink,
                   ),
                 ),
               ),

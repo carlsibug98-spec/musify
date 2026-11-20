@@ -65,8 +65,8 @@ class _PlaylistAddToPlaylistButtonState
     return IconButton(
       icon: const Icon(FluentIcons.album_add_24_regular, size: 18),
       style: IconButton.styleFrom(
-        fixedSize: const Size(42, 42),
-        backgroundColor: Colors.white,
+        fixedSize: const Size(48, 48),
+        backgroundColor: Daylight.card,
         foregroundColor: Daylight.cobalt,
         shape: const CircleBorder(),
         side: BorderSide(color: Daylight.lineStrong),

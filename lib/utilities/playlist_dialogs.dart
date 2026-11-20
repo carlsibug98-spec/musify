@@ -117,7 +117,10 @@ void showCreatePlaylistDialog(
                                 });
                               },
                               child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
                                 ),
@@ -166,7 +169,10 @@ void showCreatePlaylistDialog(
                                 });
                               },
                               child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
                                 ),
@@ -395,7 +401,8 @@ Future<bool> showAddToPlaylistDialog(
               final likedOffset = showLikedSongs ? 1 : 0;
 
               return ListView.builder(
-                itemCount: likedOffset + folders.length + topLevelPlaylists.length,
+                itemCount:
+                    likedOffset + folders.length + topLevelPlaylists.length,
                 shrinkWrap: true,
                 itemBuilder: (context, index) {
                   if (showLikedSongs && index == 0) {

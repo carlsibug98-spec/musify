@@ -115,8 +115,10 @@ abstract final class Daylight {
       Color.alphaBlend(cobalt.withValues(alpha: 0.08), _surfaceBase);
 
   /// Readable foreground for the accent gradient and filled controls.
+  /// A light accent needs dark ink; a dark accent needs white. (_lightInk is
+  /// the near-black text color; _darkInk is the near-white one for dark mode.)
   static Color get onAccent =>
-      cobalt.computeLuminance() > 0.52 ? _darkInk : Colors.white;
+      cobalt.computeLuminance() > 0.52 ? _lightInk : Colors.white;
 
   static LinearGradient get cobaltGradient => LinearGradient(
     begin: Alignment.topLeft,
@@ -145,6 +147,12 @@ abstract final class Daylight {
 
   static const displayFamily = 'Bricolage Grotesque';
   static const uiFamily = 'Inter';
+
+  /// Returns [duration], or zero when the system "Remove animations" setting
+  /// is on. Animated widgets should always route their duration through this
+  /// so Reduce Motion is honored consistently across the app.
+  static Duration motion(BuildContext context, Duration duration) =>
+      MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
 
   static TextStyle display(
     double size, {

@@ -247,11 +247,14 @@ class PlayerControlButtons extends StatelessWidget {
             : screenWidth < 360
             ? 8.0
             : 16.0;
+        // 48dp is the Material minimum; only relax it on genuinely narrow
+        // screens where five controls plus the play button cannot otherwise
+        // fit without overflowing.
         final minButtonSize = isUltraTight
-            ? 38.0
+            ? 40.0
             : isTight
-            ? 42.0
-            : 46.0;
+            ? 44.0
+            : 48.0;
         final buttonPadding = EdgeInsets.all(
           isUltraTight
               ? 6.0

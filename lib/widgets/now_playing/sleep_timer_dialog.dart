@@ -177,11 +177,7 @@ Widget _buildTimeSelector({
       children: [
         Text(
           label,
-          style: Daylight.ui(
-            13,
-            color: Daylight.ink,
-            weight: FontWeight.w600,
-          ),
+          style: Daylight.ui(13, color: Daylight.ink, weight: FontWeight.w600),
         ),
         Row(
           children: [
@@ -192,8 +188,10 @@ Widget _buildTimeSelector({
                 color: Daylight.muted,
               ),
               style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: Daylight.cardTintStrong,
+                foregroundColor: Daylight.ink,
                 shape: const CircleBorder(),
+                minimumSize: const Size(48, 48),
               ),
               onPressed: onDecrement,
             ),
@@ -216,8 +214,10 @@ Widget _buildTimeSelector({
                 color: Daylight.cobalt,
               ),
               style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: Daylight.cardTintStrong,
+                foregroundColor: Daylight.ink,
                 shape: const CircleBorder(),
+                minimumSize: const Size(48, 48),
               ),
               onPressed: onIncrement,
             ),

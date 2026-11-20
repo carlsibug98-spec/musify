@@ -417,6 +417,7 @@ class NavigationManager {
       transitionDuration: const Duration(milliseconds: 180),
       reverseTransitionDuration: const Duration(milliseconds: 150),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        if (MediaQuery.disableAnimationsOf(context)) return child;
         return FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
           child: child,
@@ -437,6 +438,7 @@ class NavigationManager {
       transitionDuration: const Duration(milliseconds: 240),
       reverseTransitionDuration: const Duration(milliseconds: 200),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        if (MediaQuery.disableAnimationsOf(context)) return child;
         final curved = CurvedAnimation(
           parent: animation,
           curve: Curves.easeOutCubic,
@@ -466,6 +468,7 @@ class NavigationManager {
       transitionDuration: const Duration(milliseconds: 220),
       reverseTransitionDuration: const Duration(milliseconds: 180),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        if (MediaQuery.disableAnimationsOf(context)) return child;
         final curvedAnimation = CurvedAnimation(
           parent: animation,
           curve: Curves.easeOutCubic,

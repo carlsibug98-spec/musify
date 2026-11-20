@@ -235,15 +235,22 @@ class _ImportSpotifyPlaylistPageState extends State<ImportSpotifyPlaylistPage> {
             .join('\n');
         await Clipboard.setData(ClipboardData(text: missingText));
         if (mounted) {
-          showToastWithButton(
-            context,
-            '${rateLimited ? '${context.l10n!.spotifyPlaylistImportFailed}\n' : ''}'
-            '$resultText\n${context.l10n!.spotifyPlaylistMissingSongs}',
-            context.l10n!.copy,
-            () => Clipboard.setData(ClipboardData(text: missingText)),
-            duration: const Duration(seconds: 8),
-            icon: FluentIcons.warning_24_regular,
-          );
+          final message =
+              '${rateLimited ? '${context.l10n!.spotifyPlaylistImportFailed}\n' : ''}'
+              '$resultText\n${context.l10n!.spotifyPlaylistMissingSongs}';
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(message),
+                duration: const Duration(seconds: 8),
+                action: SnackBarAction(
+                  label: context.l10n!.copy,
+                  onPressed: () =>
+                      Clipboard.setData(ClipboardData(text: missingText)),
+                ),
+              ),
+            );
         }
       } else {
         showToast(

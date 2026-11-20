@@ -578,7 +578,7 @@ class _QuickAccessTile extends StatelessWidget {
     final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
 
     return Material(
-      color: Colors.white,
+      color: Daylight.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Daylight.line.withValues(alpha: 0.9)),

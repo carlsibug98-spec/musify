@@ -149,6 +149,7 @@ class _MiniPlayerBodyState extends State<_MiniPlayerBody>
       pageBuilder: (context, animation, _) => const NowPlayingPage(),
       reverseTransitionDuration: const Duration(milliseconds: 250),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        if (MediaQuery.disableAnimationsOf(context)) return child;
         final tween = Tween(
           begin: const Offset(0, 1),
           end: Offset.zero,
@@ -218,7 +219,10 @@ class _MiniPlayerBodyState extends State<_MiniPlayerBody>
                             _ArtworkWidget(metadata: metadata),
                             Expanded(
                               child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 300),
+                                duration: Daylight.motion(
+                                  context,
+                                  const Duration(milliseconds: 300),
+                                ),
                                 switchInCurve: Curves.easeIn,
                                 switchOutCurve: Curves.easeOut,
                                 layoutBuilder:

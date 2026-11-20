@@ -638,7 +638,10 @@ class _LibraryTabs extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
+                          duration: Daylight.motion(
+                            context,
+                            const Duration(milliseconds: 180),
+                          ),
                           curve: Curves.easeOut,
                           height: 2,
                           width: i == index ? 22 : 0,

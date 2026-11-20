@@ -82,7 +82,7 @@ class BottomActionsRow extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       padding: const EdgeInsets.all(8),
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
     );
   }
 
@@ -101,7 +101,7 @@ class BottomActionsRow extends StatelessWidget {
           ),
           tooltip: context.l10n!.sleepTimer,
           padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           style: IconButton.styleFrom(
             backgroundColor: isActive
                 ? Daylight.cobaltSoft

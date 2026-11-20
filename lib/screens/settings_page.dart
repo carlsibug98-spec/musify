@@ -711,7 +711,10 @@ class SettingsPage extends StatelessWidget {
             return GestureDetector(
               onTap: () => _selectAccentColor(context, color),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: Daylight.motion(
+                  context,
+                  const Duration(milliseconds: 200),
+                ),
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
@@ -810,7 +813,7 @@ class SettingsPage extends StatelessWidget {
             }
 
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Daylight.card,
               surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),

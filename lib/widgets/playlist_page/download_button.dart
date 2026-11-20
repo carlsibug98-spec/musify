@@ -100,11 +100,14 @@ class _PlaylistDownloadButtonState extends State<PlaylistDownloadButton> {
         builder: (context, __, ___) {
           if (_isOffline) {
             return IconButton(
-              icon: const Icon(FluentIcons.arrow_download_off_24_filled, size: 18),
+              icon: const Icon(
+                FluentIcons.arrow_download_off_24_filled,
+                size: 18,
+              ),
               style: IconButton.styleFrom(
-                fixedSize: const Size(42, 42),
+                fixedSize: const Size(48, 48),
                 backgroundColor: Daylight.cobalt,
-                foregroundColor: Colors.white,
+                foregroundColor: Daylight.onAccent,
                 shape: const CircleBorder(),
               ),
               onPressed: () =>
@@ -139,10 +142,13 @@ class _PlaylistDownloadButtonState extends State<PlaylistDownloadButton> {
               }
 
               return IconButton(
-                icon: const Icon(FluentIcons.arrow_download_24_filled, size: 18),
+                icon: const Icon(
+                  FluentIcons.arrow_download_24_filled,
+                  size: 18,
+                ),
                 style: IconButton.styleFrom(
-                  fixedSize: const Size(42, 42),
-                  backgroundColor: Colors.white,
+                  fixedSize: const Size(48, 48),
+                  backgroundColor: Daylight.card,
                   foregroundColor: Daylight.cobalt,
                   shape: const CircleBorder(),
                   side: BorderSide(color: Daylight.lineStrong),
@@ -181,10 +187,7 @@ class _PlaylistDownloadButtonState extends State<PlaylistDownloadButton> {
                 size: 14,
                 color: Daylight.cobalt,
               ),
-              constraints: const BoxConstraints.tightFor(
-                width: 28,
-                height: 28,
-              ),
+              constraints: const BoxConstraints.tightFor(width: 28, height: 28),
               padding: EdgeInsets.zero,
               onPressed: () =>
                   offlinePlaylistService.cancelDownload(context, playlistId),
