@@ -22,13 +22,10 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:musify/extensions/l10n.dart';
 import 'package:musify/services/common_services.dart';
 import 'package:musify/services/settings_manager.dart';
-import 'package:musify/utilities/async_loader.dart';
-import 'package:musify/widgets/flip_card.dart';
+import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/song_artwork.dart';
 
 class NowPlayingArtwork extends StatelessWidget {
@@ -36,45 +33,48 @@ class NowPlayingArtwork extends StatelessWidget {
     super.key,
     required this.size,
     required this.metadata,
-    required this.lyricsController,
   });
   final Size size;
   final MediaItem metadata;
-  final FlipCardController lyricsController;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final screenWidth = size.width;
     final screenHeight = size.height;
     final isLandscape = screenWidth > screenHeight;
     final isDesktop = screenWidth > 800;
-    final imageSize = isDesktop
+    final widthBased = isDesktop
         ? screenHeight * 0.38
         : isLandscape
         ? screenHeight * 0.45
         : screenWidth < 360
-        ? screenWidth * 0.75
+        ? screenWidth * 0.70
         : screenWidth < 600
-        ? screenWidth * 0.80
-        : screenWidth * 0.65;
+        ? screenWidth * 0.74
+        : screenWidth * 0.60;
+    // Keep the cover inside the space left for it on short screens.
+    final heightBased = isDesktop
+        ? screenHeight * 0.38
+        : isLandscape
+        ? screenHeight * 0.45
+        : screenHeight * 0.46;
+    final imageSize = widthBased < heightBased ? widthBased : heightBased;
 
-    const borderRadius = 24.0;
+    // The reference player uses a large rounded square, not a circle.
+    const borderRadius = 22.0;
 
-    return FlipCard(
-      rotateSide: RotateSide.right,
-      onTapFlipping:
-          !offlineMode.value && !(metadata.extras?['isLive'] ?? false),
-      controller: lyricsController,
-      frontWidget: DecoratedBox(
+    return DaylightHalo(
+      size: imageSize,
+      rings: 2,
+      child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.15),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-              spreadRadius: 2,
+              color: const Color(0x2616181D),
+              blurRadius: 26,
+              offset: const Offset(0, 12),
+              spreadRadius: -10,
             ),
           ],
         ),
@@ -90,112 +90,11 @@ class NowPlayingArtwork extends StatelessWidget {
               ),
             ),
             Positioned(
-              right: 10,
-              bottom: 10,
+              right: 14,
+              bottom: 14,
               child: _AudioQualityBadge(metadata: metadata),
             ),
           ],
-        ),
-      ),
-      backWidget: Container(
-        width: imageSize,
-        height: imageSize,
-        decoration: BoxDecoration(
-          color: colorScheme.secondaryContainer,
-          borderRadius: BorderRadius.circular(borderRadius),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.15),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: _LyricsView(metadata: metadata),
-      ),
-    );
-  }
-}
-
-/// Fetches and caches lyrics lazily per song.
-class _LyricsView extends StatefulWidget {
-  const _LyricsView({required this.metadata});
-  final MediaItem metadata;
-
-  @override
-  State<_LyricsView> createState() => _LyricsViewState();
-}
-
-class _LyricsViewState extends State<_LyricsView> {
-  String? _resolvedKey;
-  late Future<String?> _lyricsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _resolveIfNeeded();
-  }
-
-  @override
-  void didUpdateWidget(_LyricsView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _resolveIfNeeded();
-  }
-
-  void _resolveIfNeeded() {
-    final key = '${widget.metadata.artist} - ${widget.metadata.title}';
-    if (key == _resolvedKey) return;
-    _resolvedKey = key;
-    _lyricsFuture = getSongLyrics(
-      widget.metadata.artist,
-      widget.metadata.title,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    Widget unavailable() => Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            FluentIcons.text_quote_24_regular,
-            size: 48,
-            color: colorScheme.onSecondaryContainer.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            context.l10n!.lyricsNotAvailable,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSecondaryContainer,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-
-    return AsyncLoader<String?>(
-      future: _lyricsFuture,
-      emptyWidget: unavailable(),
-      errorBuilder: (ctx, error, stack) => unavailable(),
-      builder: (context, lyrics) => SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        physics: const BouncingScrollPhysics(),
-        child: Text(
-          lyrics ?? context.l10n!.lyricsNotAvailable,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: colorScheme.onSecondaryContainer,
-            height: 1.6,
-          ),
-          textAlign: TextAlign.center,
         ),
       ),
     );

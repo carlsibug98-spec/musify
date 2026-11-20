@@ -13,24 +13,34 @@
  *
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ *
+ *     For more information about Musify, including how to contribute,
+ *     please visit: https://github.com/gokadzev/Musify
  */
 
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:musify/constants/app_constants.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/widgets/playlist_cube.dart';
 
+/// The hero cover on an album / playlist / user-songs page.
+///
+/// Albums use a large softly-rounded square (Spotify-style); playlists and
+/// system collections keep the Daylight circular cover.
 class PlaylistHeroArtwork extends StatelessWidget {
   const PlaylistHeroArtwork(
     this.playlist, {
     super.key,
     this.cubeIcon = FluentIcons.text_bullet_list_24_filled,
+    this.square = false,
   });
 
   final Map playlist;
   final IconData cubeIcon;
+  final bool square;
 
   @override
   Widget build(BuildContext context) {
@@ -38,28 +48,57 @@ class PlaylistHeroArtwork extends StatelessWidget {
       builder: (context, constraints) {
         final screenSize = MediaQuery.sizeOf(context);
         final preferredSize = screenSize.width > screenSize.height
-            ? 240.0
-            : screenSize.width / (commonPlaylistArtworkDivision - 0.1);
+            ? 180.0
+            : 148.0;
         final size = preferredSize
-            .clamp(0.0, min(constraints.maxWidth, constraints.maxHeight))
+            .clamp(0.0, math.min(constraints.maxWidth, constraints.maxHeight))
             .toDouble();
-        final artwork = PlaylistCube(
-          playlist,
-          size: size,
-          cubeIcon: cubeIcon,
-          showTypeLabel: false,
+
+        final radius = square ? 18.0 : size;
+        final child = ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: PlaylistCube(
+            playlist,
+            size: size,
+            cubeIcon: cubeIcon,
+            showTypeLabel: false,
+            borderRadius: radius,
+          ),
         );
 
-        return ClipPath(
-          clipper: const ShapeBorderClipper(
-            shape: StarBorder(
-              points: 8,
-              pointRounding: 0.8,
-              valleyRounding: 0.2,
-              innerRadiusRatio: 0.6,
+        if (square) {
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              boxShadow: [
+                BoxShadow(
+                  color: Daylight.ink.withValues(alpha: 0.20),
+                  blurRadius: 26,
+                  offset: const Offset(0, 12),
+                  spreadRadius: -10,
+                ),
+              ],
             ),
+            child: child,
+          );
+        }
+
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Daylight.ink.withValues(alpha: 0.18),
+                blurRadius: 26,
+                offset: const Offset(0, 12),
+                spreadRadius: -10,
+              ),
+            ],
           ),
-          child: artwork,
+          child: ClipOval(child: child),
         );
       },
     );

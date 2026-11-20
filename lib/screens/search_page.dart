@@ -26,23 +26,24 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/constants/app_constants.dart';
-import 'package:musify/database/radio_stations.db.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
-import 'package:musify/models/radio_model.dart';
 import 'package:musify/services/common_services.dart';
 import 'package:musify/services/data_manager.dart';
 import 'package:musify/services/playlists_manager.dart';
 import 'package:musify/services/router_service.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/app_utils.dart';
-import 'package:musify/utilities/flutter_toast.dart';
+import 'package:musify/utilities/artwork_provider.dart';
 import 'package:musify/widgets/artist_bar.dart';
 import 'package:musify/widgets/confirmation_dialog.dart';
 import 'package:musify/widgets/custom_bar.dart';
 import 'package:musify/widgets/custom_search_bar.dart';
+import 'package:musify/widgets/daylight/browse_tile.dart';
+import 'package:musify/widgets/daylight/daylight_ui.dart';
+import 'package:musify/widgets/daylight/genre_grid.dart';
 import 'package:musify/widgets/mini_player_bottom_space.dart';
 import 'package:musify/widgets/playlist_bar.dart';
-import 'package:musify/widgets/radio_station_card.dart';
 import 'package:musify/widgets/section_title.dart';
 import 'package:musify/widgets/song_bar.dart';
 
@@ -58,6 +59,10 @@ final ValueNotifier<List> searchHistoryNotifier = ValueNotifier<List>(
   Hive.box('user').get('searchHistory', defaultValue: []),
 );
 
+/// Set by the Home/Search genre cards so tapping "Pop" or "OPM" opens Search
+/// with that genre already queried — real songs, not a dead category page.
+final ValueNotifier<String?> genreSearchRequest = ValueNotifier<String?>(null);
+
 void reloadSearchHistoryFromStorage() {
   searchHistoryNotifier.value = Hive.box('user')
       .get('searchHistory', defaultValue: []);
@@ -72,11 +77,27 @@ class _SearchPageState extends State<SearchPage> {
   List<Map<String, dynamic>> _artistsSearchResult = [];
   List<dynamic> _albumsSearchResult = [];
   List<dynamic> _playlistsSearchResult = [];
-  List<RadioStation> _radioStationsSearchResult = [];
   List<String> _suggestionsList = [];
   Timer? _debounce;
   int _latestSuggestionRequest = 0;
   int _latestSearchRequest = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    genreSearchRequest.addListener(_onGenreRequest);
+    // The branch may have been created after a genre card set the request.
+    if (genreSearchRequest.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onGenreRequest());
+    }
+  }
+
+  void _onGenreRequest() {
+    final query = genreSearchRequest.value;
+    if (query == null || query.isEmpty) return;
+    genreSearchRequest.value = null;
+    _submitSearch(query);
+  }
 
   Future<void> _submitSearch([String? query]) async {
     if (query != null) {
@@ -97,6 +118,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   void dispose() {
+    genreSearchRequest.removeListener(_onGenreRequest);
     _searchBar.dispose();
     _inputNode.dispose();
     _fetchingSongs.dispose();
@@ -113,7 +135,6 @@ class _SearchPageState extends State<SearchPage> {
       _artistsSearchResult = [];
       _albumsSearchResult = [];
       _playlistsSearchResult = [];
-      _radioStationsSearchResult = [];
       _suggestionsList = [];
       _fetchingSongs.value = false;
       if (mounted) setState(() {});
@@ -125,14 +146,6 @@ class _SearchPageState extends State<SearchPage> {
     _artistsSearchResult = [];
     _albumsSearchResult = [];
     _playlistsSearchResult = [];
-    _radioStationsSearchResult = radioStationsDB
-        .where(
-          (station) =>
-              station.name.toLowerCase().contains(query.toLowerCase()) ||
-              (station.genre?.toLowerCase().contains(query.toLowerCase()) ??
-                  false),
-        )
-        .toList();
     if (mounted) setState(() {});
 
     if (!searchHistoryNotifier.value.contains(query)) {
@@ -264,12 +277,13 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n!.search)),
-      body: SingleChildScrollView(
-        padding: commonSingleChildScrollViewPadding,
-        child: Column(
-          children: <Widget>[
-            LayoutBuilder(
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: <Widget>[
+          DaylightAppBar(title: context.l10n!.search),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 600;
                 final bar = ConstrainedBox(
@@ -331,77 +345,287 @@ class _SearchPageState extends State<SearchPage> {
                 }
               },
             ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Column(
+                children: <Widget>[
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child:
+                        (_suggestionsList.isNotEmpty ||
+                            (_songsSearchResult.isEmpty &&
+                                _artistsSearchResult.isEmpty &&
+                                _albumsSearchResult.isEmpty &&
+                                _playlistsSearchResult.isEmpty))
+                        ? ValueListenableBuilder<List>(
+                            valueListenable: searchHistoryNotifier,
+                            builder: (context, searchHistory, _) {
+                              final items = _suggestionsList.isEmpty
+                                  ? searchHistory
+                                  : _suggestionsList;
 
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child:
-                  (_suggestionsList.isNotEmpty ||
-                      (_songsSearchResult.isEmpty &&
-                          _artistsSearchResult.isEmpty &&
-                          _albumsSearchResult.isEmpty &&
-                          _playlistsSearchResult.isEmpty &&
-                          _radioStationsSearchResult.isEmpty))
-                  ? ValueListenableBuilder<List>(
-                      valueListenable: searchHistoryNotifier,
-                      builder: (context, searchHistory, _) {
-                        final items = _suggestionsList.isEmpty
-                            ? searchHistory
-                            : _suggestionsList;
+                              return Column(
+                                key: ValueKey(
+                                  'history-${_suggestionsList.length}-${_searchBar.text}-${searchHistory.length}',
+                                ),
+                                children: [
+                                  if (items.isNotEmpty) ...[
+                                    if (_suggestionsList.isEmpty)
+                                      DaylightSectionHeader(
+                                        title: context.l10n!.recentSearches,
+                                        actionLabel: context.l10n!.clear,
+                                        onAction: () {
+                                          searchHistoryNotifier.value = [];
+                                          unawaited(
+                                            addOrUpdateData<List>(
+                                              'user',
+                                              'searchHistory',
+                                              [],
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    else
+                                      DaylightSectionHeader(
+                                        title: context.l10n!.search,
+                                      ),
+                                  ],
+                                  for (
+                                    int index = 0;
+                                    index < items.length;
+                                    index++
+                                  )
+                                    Builder(
+                                      builder: (context) {
+                                        final query = items[index];
+                                        final borderRadius =
+                                            getItemBorderRadius(
+                                              index,
+                                              items.length,
+                                            );
 
-                        return Column(
-                          key: ValueKey(
-                            'history-${_suggestionsList.length}-${_searchBar.text}-${searchHistory.length}',
-                          ),
-                          children: [
-                            for (int index = 0; index < items.length; index++)
-                              Builder(
-                                builder: (context) {
-                                  final query = items[index];
-                                  final borderRadius = getItemBorderRadius(
-                                    index,
-                                    items.length,
-                                  );
-
-                                  return CustomBar(
-                                    query,
-                                    FluentIcons.search_24_regular,
-                                    borderRadius: borderRadius,
-                                    onTap: () async {
-                                      await _submitSearch(query.toString());
-                                    },
-                                    onLongPress: () async {
-                                      final confirm =
-                                          await _showConfirmationDialog(
-                                            context,
-                                          ) ??
-                                          false;
-                                      if (confirm &&
-                                          searchHistory.contains(query)) {
-                                        final updatedHistory = List.from(
-                                          searchHistory,
-                                        )..remove(query);
-                                        searchHistoryNotifier.value =
-                                            updatedHistory;
-                                        unawaited(
-                                          addOrUpdateData<List>(
-                                            'user',
-                                            'searchHistory',
-                                            updatedHistory,
-                                          ),
+                                        return CustomBar(
+                                          query.toString(),
+                                          FluentIcons.search_24_regular,
+                                          borderRadius: borderRadius,
+                                          onTap: () async {
+                                            await _submitSearch(
+                                              query.toString(),
+                                            );
+                                          },
+                                          onLongPress: () async {
+                                            final confirm =
+                                                await _showConfirmationDialog(
+                                                  context,
+                                                ) ??
+                                                false;
+                                            if (confirm &&
+                                                searchHistory.contains(query)) {
+                                              final updatedHistory = List.from(
+                                                searchHistory,
+                                              )..remove(query);
+                                              searchHistoryNotifier.value =
+                                                  updatedHistory;
+                                              unawaited(
+                                                addOrUpdateData<List>(
+                                                  'user',
+                                                  'searchHistory',
+                                                  updatedHistory,
+                                                ),
+                                              );
+                                            }
+                                          },
                                         );
-                                      }
-                                    },
-                                  );
-                                },
-                              ),
-                          ],
-                        );
-                      },
-                    )
-                  : _buildSearchResults(context, primaryColor),
+                                      },
+                                    ),
+                                  if (_suggestionsList.isEmpty) ...[
+                                    if (items.isNotEmpty)
+                                      const SizedBox(height: 18),
+                                    _buildBrowseAll(context),
+                                  ],
+                                ],
+                              );
+                            },
+                          )
+                        : _buildSearchResults(context, primaryColor),
+                  ),
+                  const MiniPlayerBottomSpace(),
+                ],
+              ),
             ),
-            const MiniPlayerBottomSpace(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Spotify-style browse grid shown while the search field is idle. Every
+  /// tile opens a real Musify surface (library or downloads).
+  Widget _buildBrowseAll(BuildContext context) {
+    final tiles = <BrowseTileData>[];
+
+    final shortcuts = <BrowseTileData>[
+      BrowseTileData(
+        title: context.l10n!.madeForYou,
+        color: BrowseColors.cobalt,
+        icon: FluentIcons.sparkle_24_filled,
+        onTap: () => context.go('/home'),
+      ),
+      BrowseTileData(
+        title: context.l10n!.likedSongs,
+        color: BrowseColors.rose,
+        icon: FluentIcons.heart_24_filled,
+        onTap: () => context.push('/library/userSongs/liked'),
+      ),
+      BrowseTileData(
+        title: context.l10n!.recentlyPlayed,
+        color: BrowseColors.teal,
+        icon: FluentIcons.history_24_regular,
+        onTap: () => context.push('/library/userSongs/recents'),
+      ),
+      BrowseTileData(
+        title: context.l10n!.downloads,
+        color: BrowseColors.pine,
+        icon: FluentIcons.arrow_download_24_regular,
+        onTap: () => context.push('/library/downloads'),
+      ),
+    ];
+    tiles.addAll(shortcuts);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DaylightSectionHeader(title: context.l10n!.browseAll),
+        const SizedBox(height: 4),
+        BrowseTileGrid(tiles: tiles),
+        const SizedBox(height: 18),
+        GenreGrid(
+          title: context.l10n!.genres,
+          actionLabel: context.l10n!.seeAll,
+          onAction: () => genreSearchRequest.value = 'pop songs',
+        ),
+      ],
+    );
+  }
+
+  /// Spotify-style hero card for the best match in the result set.
+  Widget _buildTopResultCard(
+    BuildContext context, {
+    Map<String, dynamic>? song,
+    Map<String, dynamic>? artist,
+    required Color primaryColor,
+  }) {
+    final isSong = song != null;
+    final data = song ?? artist!;
+    final title = data['title']?.toString() ?? '';
+    final imageUrl = (data['highResImage'] ?? data['image'])?.toString();
+    final subtitle = isSong
+        ? (data['artist']?.toString() ?? '')
+        : context.l10n!.artist;
+
+    void onTap() {
+      if (isSong) {
+        audioHandler.playPlaylistSong(
+          playlist: {'title': _searchBar.text, 'list': _songsSearchResult},
+          songIndex: 0,
+          shuffle: false,
+        );
+      } else {
+        final artistId =
+            data['ytid']?.toString() ?? data['title']?.toString() ?? '';
+        if (artistId.isEmpty) return;
+        context.push(
+          '${NavigationManager.searchPath}/artist/${Uri.encodeComponent(artistId)}',
+          extra: data,
+        );
+      }
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Daylight.hairline,
+          boxShadow: Daylight.cardShadow,
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 74,
+                height: 74,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _topResultFallback(),
+                    if (imageUrl != null && imageUrl.isNotEmpty)
+                      Image(
+                        image: ArtworkProvider.get(imageUrl),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Daylight.display(
+                      17,
+                      color: Daylight.ink,
+                      weight: FontWeight.w700,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isSong
+                        ? '${context.l10n!.song} · $subtitle'
+                        : context.l10n!.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Daylight.ui(10.5, color: Daylight.muted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            DaylightCircleButton(
+              icon: isSong
+                  ? FluentIcons.play_24_filled
+                  : FluentIcons.arrow_right_24_regular,
+              filled: isSong,
+              tooltip: isSong ? context.l10n!.play : context.l10n!.artist,
+              onTap: onTap,
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _topResultFallback() {
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: Daylight.softCobaltGradient),
+      child: Center(
+        child: Icon(
+          FluentIcons.music_note_2_24_filled,
+          size: 30,
+          color: Daylight.cobalt,
         ),
       ),
     );
@@ -409,6 +633,27 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildSearchResults(BuildContext context, Color primaryColor) {
     final widgets = <Widget>[];
+
+    // Top result — the one thing Spotify always leads with.
+    final topSong = _songsSearchResult.isNotEmpty
+        ? _songsSearchResult.first
+        : null;
+    final topArtist = _artistsSearchResult.isNotEmpty
+        ? _artistsSearchResult.first
+        : null;
+    if (topSong != null || topArtist != null) {
+      widgets.add(DaylightSectionHeader(title: context.l10n!.topResult));
+      widgets.add(const SizedBox(height: 4));
+      widgets.add(
+        _buildTopResultCard(
+          context,
+          song: topSong,
+          artist: topArtist,
+          primaryColor: primaryColor,
+        ),
+      );
+      widgets.add(const SizedBox(height: 16));
+    }
 
     // Artists section
     if (_artistsSearchResult.isNotEmpty) {
@@ -534,48 +779,6 @@ class _SearchPageState extends State<SearchPage> {
               playlistArtwork: playlist['image'],
               cubeIcon: FluentIcons.apps_list_24_filled,
               borderRadius: borderRadius,
-            ),
-          ),
-        );
-      }
-    }
-
-    // Radio Stations section
-    if (_radioStationsSearchResult.isNotEmpty) {
-      widgets.add(
-        SectionTitle(
-          context.l10n!.radioStations,
-          primaryColor,
-          icon: FluentIcons.speaker_2_24_filled,
-        ),
-      );
-
-      final stationsCount = _radioStationsSearchResult.length > maxSongsInList
-          ? maxSongsInList
-          : _radioStationsSearchResult.length;
-
-      for (var index = 0; index < stationsCount; index++) {
-        final station = _radioStationsSearchResult[index];
-        final isLast = index == stationsCount - 1;
-
-        widgets.add(
-          Padding(
-            padding: isLast ? commonListViewBottomPadding : EdgeInsets.zero,
-            child: RadioStationCard(
-              key: listItemKey('search_radio_station', index, station),
-              station: station,
-              onPressed: () async {
-                final success = await audioHandler.playRadioStream(
-                  id: station.id,
-                  name: station.name,
-                  streamUrl: station.streamUrl,
-                  image: station.image,
-                  genre: station.genre,
-                );
-                if (!success && context.mounted) {
-                  showToast(context, context.l10n!.failedPlayingRadio);
-                }
-              },
             ),
           ),
         );

@@ -22,6 +22,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/main.dart';
 import 'package:musify/models/position_data.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/formatter.dart';
 
 PositionData _positionData = PositionData(
@@ -73,23 +74,40 @@ class _PositionSliderState extends State<PositionSlider> {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Slider(
-              value: currentValue.clamp(0.0, maxDuration),
-              onChanged: (value) {
-                setState(() {
-                  _isDragging = true;
-                  _dragValue = value;
-                });
-              },
-              onChangeEnd: (value) {
-                audioHandler.seek(Duration(seconds: value.toInt()));
-                setState(() {
-                  _isDragging = false;
-                });
-              },
-              max: maxDuration,
-              semanticFormatterCallback: (value) =>
-                  formatDuration(value.toInt()),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 3,
+                activeTrackColor: Daylight.cobalt,
+                inactiveTrackColor: Daylight.lineStrong.withValues(alpha: 0.6),
+                thumbColor: Daylight.card,
+                overlayColor: Daylight.cobalt.withValues(alpha: 0.08),
+                thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 6,
+                  elevation: 1.5,
+                ),
+                overlayShape: const RoundSliderOverlayShape(
+                  overlayRadius: 14,
+                ),
+                trackShape: const RoundedRectSliderTrackShape(),
+              ),
+              child: Slider(
+                value: currentValue.clamp(0.0, maxDuration),
+                onChanged: (value) {
+                  setState(() {
+                    _isDragging = true;
+                    _dragValue = value;
+                  });
+                },
+                onChangeEnd: (value) {
+                  audioHandler.seek(Duration(seconds: value.toInt()));
+                  setState(() {
+                    _isDragging = false;
+                  });
+                },
+                max: maxDuration,
+                semanticFormatterCallback: (value) =>
+                    formatDuration(value.toInt()),
+              ),
             ),
             _buildPositionRow(context, _positionData),
           ],
@@ -98,7 +116,7 @@ class _PositionSliderState extends State<PositionSlider> {
     );
   }
 
-  static const _textStyle = TextStyle(fontSize: 15);
+  static const _textStyle = TextStyle(fontSize: 10.5);
 
   Widget _buildPositionRow(BuildContext context, PositionData positionData) {
     final positionText = formatDuration(
@@ -111,8 +129,20 @@ class _PositionSliderState extends State<PositionSlider> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(positionText, style: _textStyle),
-          Text(durationText, style: _textStyle),
+          Text(
+            positionText,
+            style: _textStyle.copyWith(
+              fontFamily: Daylight.uiFamily,
+              color: Daylight.muted,
+            ),
+          ),
+          Text(
+            durationText,
+            style: _textStyle.copyWith(
+              fontFamily: Daylight.uiFamily,
+              color: Daylight.muted,
+            ),
+          ),
         ],
       ),
     );

@@ -22,6 +22,8 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
+import 'package:musify/theme/daylight.dart';
+import 'package:musify/utilities/artwork_provider.dart';
 
 /// The metadata and actions below a playlist, album or artist hero.
 class PlaylistHeader extends StatelessWidget {
@@ -34,6 +36,9 @@ class PlaylistHeader extends StatelessWidget {
     this.showTitle = true,
     this.monthlyListeners,
     this.description,
+    this.artist,
+    this.releaseDate,
+    this.artistArtwork,
   });
 
   final String title;
@@ -44,6 +49,11 @@ class PlaylistHeader extends StatelessWidget {
   final bool isArtist;
   final bool showTitle;
 
+  /// Real metadata for the Spotify-style album header (all optional).
+  final String? artist;
+  final DateTime? releaseDate;
+  final String? artistArtwork;
+
   /// Monthly listeners of an artist, already shortened, e.g. `447M`.
   final String? monthlyListeners;
 
@@ -52,79 +62,148 @@ class PlaylistHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final l10n = context.l10n!;
+    final isAlbumView = isAlbum == true && !isArtist;
+    if (isAlbumView) return _buildAlbumHeader(context);
+
+    final typeLabel = isArtist
+        ? l10n.artist
+        : isAlbum == true
+        ? l10n.album
+        : l10n.playlist;
+
+    final details = <String>[
+      typeLabel,
+      if (songsLength != null) '$songsLength ${l10n.songs}',
+      if (monthlyListeners != null)
+        '$monthlyListeners ${l10n.monthlyListeners}',
+    ];
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, showTitle ? 20 : 0, 24, 8),
+      padding: EdgeInsets.fromLTRB(24, showTitle ? 12 : 4, 24, 8),
       child: Column(
         children: [
           if (showTitle) ...[
-            const SizedBox(height: 24),
             Text(
               title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colorScheme.secondary,
-                letterSpacing: 0,
+              style: Daylight.display(
+                23,
+                color: Daylight.ink,
+                height: 1.12,
+                letterSpacing: -0.5,
               ),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 10),
-          ] else
-            const SizedBox(height: 12),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (isArtist)
-                _Chip(
-                  icon: FluentIcons.person_16_regular,
-                  label: context.l10n!.artist,
-                  color: colorScheme.primaryContainer,
-                  onColor: colorScheme.onPrimaryContainer,
-                  theme: theme,
-                )
-              else if (isAlbum != null)
-                _Chip(
-                  icon: isAlbum!
-                      ? FluentIcons.cd_16_regular
-                      : FluentIcons.apps_list_24_regular,
-                  label: isAlbum!
-                      ? context.l10n!.album
-                      : context.l10n!.playlist,
-                  color: colorScheme.primaryContainer,
-                  onColor: colorScheme.onPrimaryContainer,
-                  theme: theme,
-                ),
-              if (songsLength != null)
-                _Chip(
-                  icon: FluentIcons.text_bullet_list_24_filled,
-                  label: '$songsLength ${context.l10n!.songs}',
-                  color: colorScheme.secondaryContainer,
-                  onColor: colorScheme.onSecondaryContainer,
-                  theme: theme,
-                ),
-              if (monthlyListeners != null)
-                _Chip(
-                  icon: FluentIcons.headphones_20_filled,
-                  label: '$monthlyListeners ${context.l10n!.monthlyListeners}',
-                  color: colorScheme.secondaryContainer,
-                  onColor: colorScheme.onSecondaryContainer,
-                  theme: theme,
-                ),
-            ],
+            const SizedBox(height: 7),
+          ],
+          Text(
+            details.join(' · '),
+            style: Daylight.ui(10.5, color: Daylight.muted),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           if (description != null && description!.trim().isNotEmpty)
             _Description(description!.trim()),
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
+
+  /// Spotify-style left-aligned album header: bold title, an artist row with a
+  /// circular avatar, and a `Album • date` line. All metadata is real (looked
+  /// up online) and simply omitted when unavailable.
+  Widget _buildAlbumHeader(BuildContext context) {
+    final l10n = context.l10n!;
+    final dateText = releaseDate != null
+        ? '${releaseDate!.day} ${_monthShort(releaseDate!.month)} ${releaseDate!.year}'
+        : null;
+    final meta = <String>[l10n.album];
+    if (dateText != null) {
+      meta.add(dateText);
+    } else if (songsLength != null) {
+      meta.add('$songsLength ${l10n.songs}');
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Daylight.display(28, weight: FontWeight.w800, height: 1.08),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (artist != null && artist!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (artistArtwork != null && artistArtwork!.isNotEmpty)
+                  ClipOval(
+                    child: Image(
+                      image: ArtworkProvider.get(artistArtwork!),
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _avatarFallback(),
+                    ),
+                  )
+                else
+                  _avatarFallback(),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    artist!.trim(),
+                    style: Daylight.ui(
+                      13,
+                      weight: FontWeight.w700,
+                      color: Daylight.ink,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            meta.join('  ·  '),
+            style: Daylight.ui(12, color: Daylight.muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _avatarFallback() => Container(
+    width: 28,
+    height: 28,
+    decoration: BoxDecoration(
+      color: Daylight.cardTintStrong,
+      shape: BoxShape.circle,
+    ),
+    child: Icon(FluentIcons.person_24_regular, size: 15, color: Daylight.faint),
+  );
+
+  String _monthShort(int month) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 }
 
 /// The artist biography, three lines until it is tapped.
@@ -142,64 +221,17 @@ class _DescriptionState extends State<_Description> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: GestureDetector(
-        onTap: () => setState(() => _isExpanded = !_isExpanded),
+    return GestureDetector(
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 10),
         child: Text(
           widget.text,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.4,
-          ),
+          style: Daylight.ui(11, color: Daylight.muted, height: 1.5),
           textAlign: TextAlign.center,
           maxLines: _isExpanded ? null : 3,
           overflow: _isExpanded ? TextOverflow.clip : TextOverflow.ellipsis,
         ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onColor,
-    required this.theme,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final Color onColor;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: onColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: onColor,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ],
       ),
     );
   }

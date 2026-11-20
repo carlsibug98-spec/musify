@@ -30,9 +30,12 @@ import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
 import 'package:musify/services/router_service.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/app_utils.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/widgets/now_playing/marquee_text_widget.dart';
+import 'package:musify/widgets/now_playing/now_playing_lyric_line.dart';
+import 'package:musify/widgets/now_playing/song_quick_actions.dart';
 import 'package:musify/widgets/playback_icon_button.dart';
 import 'package:musify/widgets/position_slider.dart';
 
@@ -54,8 +57,8 @@ class NowPlayingControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isDesktop = size.width > 800;
+    final isLive = metadata.extras?['isLive'] ?? false;
 
     final titleFontSize = getResponsiveTitleFontSize(size);
     final artistFontSize = getResponsiveArtistFontSize(size);
@@ -83,7 +86,7 @@ class NowPlayingControls extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!isCompact) const Spacer(),
+            if (!isCompact && !isLive) NowPlayingLyricLine(metadata: metadata),
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 16 : 24,
@@ -91,19 +94,31 @@ class NowPlayingControls extends StatelessWidget {
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onLongPress: () => _copyNowPlayingSong(context, metadata),
-                    child: MarqueeTextWidget(
-                      text: metadata.title,
-                      fontColor: colorScheme.secondary,
-                      fontSize: titleFontSize * fontScale,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onLongPress: () =>
+                              _copyNowPlayingSong(context, metadata),
+                          child: MarqueeTextWidget(
+                            text: metadata.title,
+                            fontColor: Daylight.ink,
+                            fontSize: titleFontSize * fontScale,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: Daylight.displayFamily,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SongQuickActions(metadata: metadata),
+                    ],
                   ),
                   SizedBox(height: spacing),
-                  if (metadata.artist != null)
+                  if (metadata.artist != null && metadata.artist!.isNotEmpty)
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: canOpenArtist
@@ -112,15 +127,15 @@ class NowPlayingControls extends StatelessWidget {
                       onLongPress: () => _copyNowPlayingSong(context, metadata),
                       child: MarqueeTextWidget(
                         text: metadata.artist!,
-                        fontColor: colorScheme.onSurfaceVariant,
+                        fontColor: Daylight.muted,
                         fontSize: artistFontSize * fontScale,
                         fontWeight: FontWeight.w500,
+                        fontFamily: Daylight.uiFamily,
                       ),
                     ),
                 ],
               ),
             ),
-            if (!isCompact) const Spacer(),
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: isDesktop ? 400 : constraints.maxWidth,
@@ -133,7 +148,6 @@ class NowPlayingControls extends StatelessWidget {
               iconSize: adjustedIconSize * iconScale,
               miniIconSize: adjustedMiniIconSize * iconScale,
             ),
-            if (!isCompact) const Spacer(),
           ],
         );
       },
@@ -302,7 +316,6 @@ class PlayerControlButtons extends StatelessWidget {
               SizedBox(width: buttonSpacing),
               _buildRepeatButton(
                 context,
-                colorScheme,
                 miniControlSize,
                 buttonConstraints,
                 buttonPadding,
@@ -328,20 +341,16 @@ class PlayerControlButtons extends StatelessWidget {
           icon: Icon(
             value
                 ? FluentIcons.arrow_shuffle_24_filled
-                : FluentIcons.arrow_shuffle_off_24_regular,
-            color: value ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                : FluentIcons.arrow_shuffle_24_regular,
+            color: value ? Daylight.cobalt : Daylight.muted,
           ),
           tooltip: context.l10n!.shuffle,
           iconSize: size,
           constraints: buttonConstraints,
           padding: buttonPadding,
           style: IconButton.styleFrom(
-            backgroundColor: value
-                ? colorScheme.primary
-                : colorScheme.surfaceContainerHighest,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            backgroundColor: value ? Daylight.cobaltSoft : Colors.transparent,
+            shape: const CircleBorder(),
           ),
           onPressed: () {
             audioHandler.setShuffleMode(
@@ -355,60 +364,46 @@ class PlayerControlButtons extends StatelessWidget {
     );
   }
 
+  /// Repeat owns the far-right transport slot. Tapping cycles
+  /// off → all → one with a filled, accented state while active.
   Widget _buildRepeatButton(
     BuildContext context,
-    ColorScheme colorScheme,
     double size,
     BoxConstraints buttonConstraints,
     EdgeInsets buttonPadding,
   ) {
-    return StreamBuilder<List<MediaItem>>(
-      stream: audioHandler.queue,
-      builder: (context, snapshot) {
-        final queue = snapshot.data ?? [];
-        return ValueListenableBuilder<AudioServiceRepeatMode>(
-          valueListenable: repeatNotifier,
-          builder: (_, repeatMode, __) {
-            final isActive = repeatMode != AudioServiceRepeatMode.none;
-
-            return IconButton(
-              icon: Icon(
-                repeatMode == AudioServiceRepeatMode.one
-                    ? FluentIcons.arrow_repeat_1_24_filled
-                    : isActive
-                    ? FluentIcons.arrow_repeat_all_24_filled
-                    : FluentIcons.arrow_repeat_all_off_24_regular,
-                color: isActive
-                    ? colorScheme.onPrimary
-                    : colorScheme.onSurfaceVariant,
-              ),
-              tooltip: context.l10n!.repeat,
-              iconSize: size,
-              constraints: buttonConstraints,
-              padding: buttonPadding,
-              style: IconButton.styleFrom(
-                backgroundColor: isActive
-                    ? colorScheme.primary
-                    : colorScheme.surfaceContainerHighest,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () {
-                final AudioServiceRepeatMode newMode;
-                if (repeatMode == AudioServiceRepeatMode.none) {
-                  newMode = queue.length <= 1
-                      ? AudioServiceRepeatMode.one
-                      : AudioServiceRepeatMode.all;
-                } else if (repeatMode == AudioServiceRepeatMode.all) {
-                  newMode = AudioServiceRepeatMode.one;
-                } else {
-                  newMode = AudioServiceRepeatMode.none;
-                }
-                repeatNotifier.value = newMode;
-                audioHandler.setRepeatMode(newMode);
-              },
-            );
+    return ValueListenableBuilder<AudioServiceRepeatMode>(
+      valueListenable: repeatNotifier,
+      builder: (_, mode, __) {
+        final isActive = mode != AudioServiceRepeatMode.none;
+        final isOne = mode == AudioServiceRepeatMode.one;
+        return IconButton(
+          icon: Icon(
+            isOne
+                ? FluentIcons.arrow_repeat_1_24_filled
+                : isActive
+                ? FluentIcons.arrow_repeat_all_24_filled
+                : FluentIcons.arrow_repeat_all_24_regular,
+            color: isActive ? Daylight.cobalt : Daylight.muted,
+          ),
+          tooltip: context.l10n!.repeat,
+          iconSize: size,
+          constraints: buttonConstraints,
+          padding: buttonPadding,
+          style: IconButton.styleFrom(
+            backgroundColor: isActive
+                ? Daylight.cobaltSoft
+                : Colors.transparent,
+            shape: const CircleBorder(),
+          ),
+          onPressed: () {
+            final next = switch (mode) {
+              AudioServiceRepeatMode.none => AudioServiceRepeatMode.all,
+              AudioServiceRepeatMode.all => AudioServiceRepeatMode.one,
+              _ => AudioServiceRepeatMode.none,
+            };
+            repeatNotifier.value = next;
+            unawaited(audioHandler.setRepeatMode(next));
           },
         );
       },
@@ -462,11 +457,27 @@ class _PlaybackControlsRow extends StatelessWidget {
                     minButtonSize: minButtonSize,
                   ),
                   SizedBox(width: buttonSpacing),
-                  PlaybackIconButton(
-                    iconColor: colorScheme.onPrimary,
-                    backgroundColor: colorScheme.primary,
-                    iconSize: controlIconSize,
-                    padding: playPadding,
+                  Container(
+                    width: minButtonSize + 18,
+                    height: minButtonSize + 18,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      gradient: Daylight.cobaltGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Daylight.cobaltDeep.withValues(alpha: 0.3),
+                          blurRadius: 22,
+                          offset: const Offset(0, 10),
+                          spreadRadius: -8,
+                        ),
+                      ],
+                    ),
+                    child: PlaybackIconButton(
+                      iconColor: Daylight.onAccent,
+                      backgroundColor: Colors.transparent,
+                      iconSize: controlIconSize * 0.62,
+                    ),
                   ),
                   SizedBox(width: buttonSpacing),
                   _PlaybackControlButton(
@@ -522,18 +533,16 @@ class _PlaybackControlButton extends StatelessWidget {
     return IconButton(
       icon: Icon(
         icon,
-        color: isEnabled
-            ? colorScheme.onSurface
-            : colorScheme.onSurface.withValues(alpha: 0.3),
+        color: isEnabled ? Daylight.ink : Daylight.ink.withValues(alpha: 0.24),
       ),
       tooltip: tooltip,
       constraints: buttonConstraints,
       iconSize: controlIconSize * 0.65,
       onPressed: isEnabled ? onPressed : null,
       style: IconButton.styleFrom(
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        disabledBackgroundColor: colorScheme.surfaceContainerHighest,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.transparent,
+        disabledBackgroundColor: Colors.transparent,
+        shape: const CircleBorder(),
         padding: buttonPadding,
         minimumSize: Size(minButtonSize, minButtonSize),
       ),

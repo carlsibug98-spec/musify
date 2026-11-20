@@ -29,11 +29,13 @@ class MarqueeTextWidget extends StatelessWidget {
     required this.fontColor,
     required this.fontSize,
     required this.fontWeight,
+    this.fontFamily,
   });
   final String text;
   final Color fontColor;
   final double fontSize;
   final FontWeight fontWeight;
+  final String? fontFamily;
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +44,11 @@ class MarqueeTextWidget extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
+          fontFamily: fontFamily,
           fontSize: fontSize,
           fontWeight: fontWeight,
           color: fontColor,
-          letterSpacing: 0.2,
+          letterSpacing: fontFamily == null ? 0.2 : -0.5,
         ),
       ),
     );

@@ -13,21 +13,31 @@
  *
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ *
+ *     For more information about Musify, including how to contribute,
+ *     please visit: https://github.com/gokadzev/Musify
  */
 
 import 'package:material_ui/material_ui.dart';
+import 'package:musify/theme/daylight.dart';
 
 class PlaylistSliverAppBar extends StatelessWidget {
   const PlaylistSliverAppBar({
     super.key,
-    required this.title,
+    required this.label,
     required this.artwork,
     this.leading,
+    this.largeCover = false,
   });
 
-  final String title;
+  /// Shown in the top bar, e.g. `Album` or `Artist`.
+  final String label;
   final Widget artwork;
   final Widget? leading;
+
+  /// Albums show a larger square cover that needs more collapsed height.
+  final bool largeCover;
 
   @override
   Widget build(BuildContext context) {
@@ -36,27 +46,31 @@ class PlaylistSliverAppBar extends StatelessWidget {
     return SliverAppBar(
       leading: leading,
       pinned: true,
-      expandedHeight: screenSize.width > screenSize.height ? 380 : 340,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      foregroundColor: Daylight.ink,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      expandedHeight: largeCover
+          ? screenSize.width * 0.92 + 96
+          : (screenSize.width > screenSize.height ? 300 : 280),
+      title: Text(
+        label,
+        style: Daylight.ui(
+          10.5,
+          color: Daylight.muted,
+          weight: FontWeight.w600,
+          letterSpacing: 0.4,
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
-        expandedTitleScale: 1.35,
-        titlePadding: const EdgeInsetsDirectional.only(
-          start: 64,
-          end: 64,
-          bottom: 16,
-        ),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-            letterSpacing: 0,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        expandedTitleScale: 1,
+        titlePadding: EdgeInsets.zero,
+        title: const SizedBox.shrink(),
         background: Padding(
-          padding: const EdgeInsets.only(top: 56, bottom: 64),
+          padding: const EdgeInsets.only(top: 48, bottom: 10),
           child: Center(child: artwork),
         ),
       ),

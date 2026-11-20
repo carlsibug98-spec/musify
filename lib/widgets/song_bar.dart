@@ -34,6 +34,7 @@ import 'package:musify/services/playlist_download_service.dart';
 import 'package:musify/services/playlists_manager.dart';
 import 'package:musify/services/router_service.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/formatter.dart';
 import 'package:musify/utilities/playlist_dialogs.dart';
@@ -229,7 +230,7 @@ Future<void> _handleSongMenuAction({
       await onRename?.call();
       break;
     case 'add_to_playlist':
-      showAddToPlaylistDialog(context, song: song);
+      unawaited(showAddToPlaylistDialog(context, song: song));
       break;
     case 'remove_from_recents':
       try {
@@ -309,6 +310,7 @@ class SongBar extends StatefulWidget {
     this.playCount,
     this.barPadding,
     this.onAdd,
+    this.artworkBorderRadius,
     super.key,
   });
 
@@ -334,6 +336,10 @@ class SongBar extends StatefulWidget {
 
   /// Replaces the trailing overflow menu with an add button when set.
   final VoidCallback? onAdd;
+
+  /// Rounds the cover art. The default is a circle, matching the Daylight
+  /// lists; the artist page passes a rounded square like the reference.
+  final BorderRadius? artworkBorderRadius;
 
   @override
   State<SongBar> createState() => _SongBarState();
@@ -434,38 +440,40 @@ class _SongBarState extends State<SongBar> {
         : widget.playCount;
 
     return Material(
-      color: widget.backgroundColor ?? colorScheme.surfaceContainerLow,
+      color: widget.backgroundColor ?? Colors.transparent,
       borderRadius: widget.borderRadius,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: _handleSongTap,
+        splashColor: Daylight.cobalt.withValues(alpha: 0.06),
+        highlightColor: Daylight.cobalt.withValues(alpha: 0.04),
         child: Padding(
           padding:
               widget.barPadding ??
               const EdgeInsetsDirectional.symmetric(
-                vertical: 10,
+                vertical: 9,
                 horizontal: 12,
               ),
           child: Row(
             children: [
               if (widget.rank != null) ...[
                 SizedBox(
-                  width: 28,
+                  width: 24,
                   child: Text(
                     '${widget.rank}',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+                    style: Daylight.ui(
+                      10.5,
+                      color: Daylight.faint,
+                      weight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
               ],
 
               _buildAlbumArt(colorScheme),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
 
               Expanded(
                 child: _SongInfo(
@@ -473,21 +481,26 @@ class _SongBarState extends State<SongBar> {
                   artist: _songArtist,
                   plays: plays,
                   colorScheme: colorScheme,
+                  likeStatus: _songLikeStatus,
+                  offlineStatus: _songOfflineStatus,
                 ),
               ),
 
               if (widget.onAdd != null)
                 IconButton(
                   padding: EdgeInsets.zero,
+                  iconSize: 20,
                   icon: Icon(
                     FluentIcons.add_circle_24_regular,
-                    color: colorScheme.primary,
+                    color: Daylight.cobalt,
                   ),
                   tooltip: context.l10n!.addToPlaylist,
                   onPressed: widget.onAdd,
                 )
               else
                 OverflowMenuButton<String>(
+                  iconSize: 19,
+                  color: Daylight.faint,
                   onSelected: (value) => _handleSongMenuAction(
                     context: context,
                     value: value,
@@ -531,7 +544,7 @@ class _SongBarState extends State<SongBar> {
   }
 
   Widget _buildAlbumArt(ColorScheme colorScheme) {
-    const size = 52.0;
+    const size = 44.0;
     final isDurationAvailable =
         widget.showMusicDuration && widget.song['duration'] != null;
 
@@ -547,29 +560,30 @@ class _SongBarState extends State<SongBar> {
             isDurationAvailable: isDurationAvailable,
             colorScheme: colorScheme,
             offlineStatus: _songOfflineStatus,
-            likeStatus: _songLikeStatus,
             duration: widget.song['duration'],
+            borderRadius: widget.artworkBorderRadius,
           ),
           if (isDownloading)
             Positioned.fill(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius:
+                    widget.artworkBorderRadius ?? BorderRadius.circular(size),
                 child: ColoredBox(
-                  color: colorScheme.scrim.withValues(alpha: 0.42),
+                  color: Daylight.ink.withValues(alpha: 0.42),
                   child: Center(
                     child: Material(
-                      color: colorScheme.primaryContainer,
+                      color: Colors.white,
                       elevation: 2,
                       shape: const CircleBorder(),
                       child: Padding(
-                        padding: const EdgeInsets.all(7),
+                        padding: const EdgeInsets.all(6),
                         child: SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: 15,
+                          height: 15,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: colorScheme.onPrimaryContainer,
-                            backgroundColor: colorScheme.primaryContainer,
+                            strokeWidth: 2,
+                            color: Daylight.cobalt,
+                            backgroundColor: Daylight.cobaltSoft,
                           ),
                         ),
                       ),
@@ -666,12 +680,16 @@ class _SongInfo extends StatelessWidget {
     required this.artist,
     this.plays,
     required this.colorScheme,
+    required this.likeStatus,
+    required this.offlineStatus,
   });
 
   final String title;
   final String artist;
   final String? plays;
   final ColorScheme colorScheme;
+  final ValueListenable<bool> likeStatus;
+  final ValueListenable<bool> offlineStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -681,24 +699,21 @@ class _SongInfo extends StatelessWidget {
         Text(
           title,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-            color: colorScheme.onSurface,
+          style: Daylight.ui(
+            12.5,
+            color: Daylight.ink,
+            weight: FontWeight.w600,
+            letterSpacing: -0.1,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 1),
         Row(
           children: [
             Flexible(
               child: Text(
                 artist,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontWeight: FontWeight.w400,
-                  fontSize: 13,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: Daylight.ui(10.5, color: Daylight.muted),
               ),
             ),
             if (plays != null && plays!.isNotEmpty) ...[
@@ -706,30 +721,75 @@ class _SongInfo extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
                   '•',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: Daylight.ui(10.5, color: Daylight.faint),
                 ),
               ),
               Icon(
                 FluentIcons.headphones_20_filled,
-                size: 12,
-                color: colorScheme.primary,
+                size: 11,
+                color: Daylight.cobalt,
               ),
               const SizedBox(width: 3),
               Text(
                 plays!,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.primary,
+                style: Daylight.ui(
+                  10,
+                  color: Daylight.cobalt,
+                  weight: FontWeight.w600,
                 ),
               ),
             ],
+            const SizedBox(width: 6),
+            _SongStatusMarks(
+              likeStatus: likeStatus,
+              offlineStatus: offlineStatus,
+            ),
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Liked and downloaded marks live in the card row, leaving the cover art
+/// unobstructed.
+class _SongStatusMarks extends StatelessWidget {
+  const _SongStatusMarks({
+    required this.likeStatus,
+    required this.offlineStatus,
+  });
+
+  final ValueListenable<bool> likeStatus;
+  final ValueListenable<bool> offlineStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: offlineStatus,
+      builder: (context, isOffline, _) => ValueListenableBuilder<bool>(
+        valueListenable: likeStatus,
+        builder: (context, isLiked, __) {
+          if (!isOffline && !isLiked) return const SizedBox.shrink();
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isLiked)
+                Icon(
+                  FluentIcons.heart_24_filled,
+                  size: 11,
+                  color: Daylight.cobalt,
+                ),
+              if (isLiked && isOffline) const SizedBox(width: 4),
+              if (isOffline)
+                Icon(
+                  FluentIcons.cloud_off_24_filled,
+                  size: 11,
+                  color: Daylight.muted,
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -747,11 +807,13 @@ class _OfflineArtwork extends StatelessWidget {
     required this.artworkPath,
     required this.size,
     required this.colorScheme,
+    this.borderRadius,
   });
 
   final String artworkPath;
   final double size;
   final ColorScheme colorScheme;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -759,35 +821,14 @@ class _OfflineArtwork extends StatelessWidget {
       width: size,
       height: size,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Stack(
-          children: [
-            Image.file(
-              File(artworkPath),
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  NullArtworkWidget(iconSize: 30, size: size),
-            ),
-            Positioned(
-              top: 3,
-              right: 3,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: colorScheme.tertiaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  FluentIcons.cloud_off_24_filled,
-                  size: 11,
-                  color: colorScheme.onTertiaryContainer,
-                ),
-              ),
-            ),
-          ],
+        borderRadius: borderRadius ?? BorderRadius.circular(size / 2),
+        child: Image.file(
+          File(artworkPath),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              NullArtworkWidget(iconSize: 26, size: size),
         ),
       ),
     );
@@ -801,8 +842,7 @@ class _OnlineArtwork extends StatelessWidget {
     required this.isDurationAvailable,
     required this.colorScheme,
     required this.duration,
-    required this.isOffline,
-    required this.isLiked,
+    this.borderRadius,
   });
 
   final String lowResImageUrl;
@@ -810,8 +850,7 @@ class _OnlineArtwork extends StatelessWidget {
   final bool isDurationAvailable;
   final ColorScheme colorScheme;
   final dynamic duration;
-  final bool isOffline;
-  final bool isLiked;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -831,78 +870,42 @@ class _OnlineArtwork extends StatelessWidget {
             memCacheWidth: 256,
             memCacheHeight: 256,
             imageBuilder: (context, imageProvider) => ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Stack(
-                children: [
-                  Image(
-                    image: imageProvider,
-                    fit: isImageSmall ? BoxFit.fill : BoxFit.cover,
-                    width: size,
-                    height: size,
-                    centerSlice: isImageSmall
-                        ? const Rect.fromLTRB(1, 1, 1, 1)
-                        : null,
-                  ),
-                  if (isOffline)
-                    Positioned(
-                      top: 3,
-                      right: 3,
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: colorScheme.tertiaryContainer,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          FluentIcons.cloud_off_24_filled,
-                          size: 11,
-                          color: colorScheme.onTertiaryContainer,
-                        ),
-                      ),
-                    )
-                  else if (isLiked)
-                    Positioned(
-                      top: 3,
-                      right: 3,
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          FluentIcons.heart_24_filled,
-                          size: 11,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                ],
+              borderRadius: borderRadius ?? BorderRadius.circular(size / 2),
+              child: Image(
+                image: imageProvider,
+                fit: isImageSmall ? BoxFit.fill : BoxFit.cover,
+                width: size,
+                height: size,
+                centerSlice:
+                    isImageSmall ? const Rect.fromLTRB(1, 1, 1, 1) : null,
               ),
             ),
             errorWidget: (context, url, error) =>
-                NullArtworkWidget(iconSize: 30, size: size),
+                NullArtworkWidget(iconSize: 26, size: size),
           ),
-          if (isDurationAvailable && !isOffline)
+          if (isDurationAvailable)
             Positioned(
-              bottom: 4,
-              right: 4,
+              bottom: 0,
+              right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.85,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Daylight.ink.withValues(alpha: 0.12),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
                 child: Text(
                   formatDuration(duration),
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
+                  style: Daylight.ui(
+                    8,
+                    color: Daylight.muted,
+                    weight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -921,8 +924,8 @@ class _ArtworkDisplay extends StatelessWidget {
     required this.isDurationAvailable,
     required this.colorScheme,
     required this.offlineStatus,
-    required this.likeStatus,
     required this.duration,
+    this.borderRadius,
   });
 
   final String lowResImageUrl;
@@ -931,8 +934,8 @@ class _ArtworkDisplay extends StatelessWidget {
   final bool isDurationAvailable;
   final ColorScheme colorScheme;
   final ValueListenable<bool> offlineStatus;
-  final ValueListenable<bool> likeStatus;
   final dynamic duration;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -944,22 +947,17 @@ class _ArtworkDisplay extends StatelessWidget {
             artworkPath: artworkPath!,
             size: size,
             colorScheme: colorScheme,
+            borderRadius: borderRadius,
           );
         }
 
-        return ValueListenableBuilder<bool>(
-          valueListenable: likeStatus,
-          builder: (_, isLiked, __) {
-            return _OnlineArtwork(
-              lowResImageUrl: lowResImageUrl,
-              size: size,
-              isDurationAvailable: isDurationAvailable,
-              colorScheme: colorScheme,
-              duration: duration,
-              isOffline: isOffline,
-              isLiked: isLiked,
-            );
-          },
+        return _OnlineArtwork(
+          lowResImageUrl: lowResImageUrl,
+          size: size,
+          isDurationAvailable: isDurationAvailable,
+          colorScheme: colorScheme,
+          duration: duration,
+          borderRadius: borderRadius,
         );
       },
     );

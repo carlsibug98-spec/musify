@@ -23,6 +23,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/services/artist_service.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/artwork_provider.dart';
 
 class ArtistBar extends StatelessWidget {
@@ -39,14 +40,13 @@ class ArtistBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final title = normalizeArtistDisplayTitle(
       artist['title']?.toString() ?? context.l10n!.artist,
     );
     final image = normalizeArtistThumbnailUrl(artist['image']?.toString());
 
     return Material(
-      color: colorScheme.surfaceContainerLow,
+      color: Colors.white,
       borderRadius: borderRadius,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -64,29 +64,25 @@ class ArtistBar extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: colorScheme.onSurface,
+                      style: Daylight.ui(
+                        12.5,
+                        color: Daylight.ink,
+                        weight: FontWeight.w600,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
                     Text(
                       context.l10n!.artist,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: Daylight.ui(10.5, color: Daylight.muted),
                     ),
                   ],
                 ),
               ),
               Icon(
                 FluentIcons.chevron_right_24_regular,
-                color: colorScheme.onSurfaceVariant,
-                size: 20,
+                color: Daylight.faint,
+                size: 18,
               ),
             ],
           ),

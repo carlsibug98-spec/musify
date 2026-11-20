@@ -28,13 +28,20 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/widgets/confirmation_dialog.dart';
+import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/no_artwork_cube.dart';
 
 class QueueWidget extends StatefulWidget {
-  const QueueWidget({super.key, this.isBottomSheet = false});
+  const QueueWidget({
+    super.key,
+    this.isBottomSheet = false,
+    this.showHeader = true,
+  });
 
   final bool isBottomSheet;
+  final bool showHeader;
 
   @override
   State<QueueWidget> createState() => _QueueWidgetState();
@@ -116,14 +123,10 @@ class _QueueWidgetState extends State<QueueWidget> {
 
     return Column(
       children: [
-        _buildHeader(context, colorScheme, textTheme, compact: false),
-        Divider(
-          height: 1,
-          thickness: 1,
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-          indent: 8,
-          endIndent: 8,
-        ),
+        if (widget.showHeader) ...[
+          _buildHeader(context, colorScheme, textTheme, compact: false),
+          Divider(color: Daylight.line, height: 1, thickness: 1),
+        ],
         Expanded(
           child: _queue.isEmpty
               ? _buildEmptyState(context, colorScheme, textTheme)
@@ -176,15 +179,16 @@ class _QueueWidgetState extends State<QueueWidget> {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(compact ? 8 : 10),
+            width: compact ? 36 : 40,
+            height: compact ? 36 : 40,
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              color: Daylight.cobaltSoft,
+              shape: BoxShape.circle,
             ),
             child: Icon(
               FluentIcons.apps_list_24_regular,
-              color: colorScheme.onPrimaryContainer,
-              size: compact ? 20.0 : 22.0,
+              color: Daylight.cobalt,
+              size: compact ? 18.0 : 20.0,
             ),
           ),
           SizedBox(width: compact ? 12 : 14),
@@ -194,52 +198,37 @@ class _QueueWidgetState extends State<QueueWidget> {
               children: [
                 Text(
                   context.l10n!.queue,
-                  style: compact
-                      ? TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        )
-                      : textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  style: Daylight.display(compact ? 18 : 22, height: 1.05),
                 ),
                 if (_queue.isNotEmpty)
                   Text(
                     '${_queue.length} ${context.l10n!.songs.toLowerCase()}',
-                    style: compact
-                        ? TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 13,
-                          )
-                        : textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                    style: Daylight.ui(
+                      compact ? 11 : 11.5,
+                      color: Daylight.muted,
+                    ),
                   ),
               ],
             ),
           ),
           if (_queue.length > 1)
-            IconButton.filledTonal(
-              onPressed: _shuffleQueue,
-              icon: const Icon(FluentIcons.arrow_shuffle_24_filled, size: 18),
+            DaylightCircleButton(
+              onTap: _shuffleQueue,
+              icon: FluentIcons.arrow_shuffle_24_filled,
               tooltip: context.l10n!.shuffle,
-              visualDensity: VisualDensity.compact,
+              size: 36,
+              iconSize: 16,
+              color: Daylight.cobalt,
             ),
           if (_queue.isNotEmpty) ...[
             const SizedBox(width: 8),
-            FilledButton.tonalIcon(
-              onPressed: () => _confirmClearQueue(context),
-              icon: const Icon(FluentIcons.dismiss_24_regular, size: 18),
-              label: Text(context.l10n!.clear),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                visualDensity: VisualDensity.compact,
-              ),
+            DaylightCircleButton(
+              onTap: () => _confirmClearQueue(context),
+              icon: FluentIcons.dismiss_24_regular,
+              tooltip: context.l10n!.clear,
+              size: 36,
+              iconSize: 16,
+              color: Daylight.danger,
             ),
           ],
         ],
@@ -405,7 +394,6 @@ class QueueTile extends StatelessWidget {
   final Future<bool?> Function(DismissDirection)? confirmDismiss;
 
   static const double _artSize = 46;
-  static const double _artRadius = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -421,82 +409,107 @@ class QueueTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         colorScheme: colorScheme,
       ),
-      child: Material(
-        color: isCurrentSong
-            ? colorScheme.primaryContainer.withValues(alpha: 0.45)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          splashColor: Colors.transparent,
-          highlightColor: colorScheme.onSurface.withValues(alpha: 0.06),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                _ArtworkThumbnail(
-                  song: song,
-                  size: _artSize,
-                  radius: _artRadius,
-                  colorScheme: colorScheme,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: isCurrentSong ? Daylight.cobaltWash : Daylight.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isCurrentSong
+                  ? Daylight.cobalt.withValues(alpha: 0.18)
+                  : Daylight.ink.withValues(alpha: 0.04),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Daylight.ink.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+                spreadRadius: -5,
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(14),
+              splashColor: Colors.transparent,
+              highlightColor: Daylight.cobalt.withValues(alpha: 0.05),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        song['title']?.toString() ?? '',
-                        style: TextStyle(
-                          color: isCurrentSong
-                              ? colorScheme.primary
-                              : colorScheme.onSurface,
-                          fontSize: 14,
-                          fontWeight: isCurrentSong
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                child: Row(
+                  children: [
+                    _ArtworkThumbnail(
+                      song: song,
+                      size: _artSize,
+                      radius: _artSize / 2,
+                      colorScheme: colorScheme,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            song['title']?.toString() ?? '',
+                            style: Daylight.ui(
+                              13,
+                              color: isCurrentSong
+                                  ? Daylight.cobaltDeep
+                                  : Daylight.ink,
+                              weight: isCurrentSong
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            song['artist']?.toString() ?? '',
+                            style: Daylight.ui(
+                              10,
+                              color: Daylight.muted,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        song['artist']?.toString() ?? '',
-                        style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(width: 8),
+                    if (isCurrentSong) ...[
+                      Icon(
+                        FluentIcons.music_note_2_24_regular,
+                        color: Daylight.cobalt,
+                        size: 16,
                       ),
+                      const SizedBox(width: 6),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (isCurrentSong) ...[
-                  Icon(
-                    FluentIcons.music_note_2_24_regular,
-                    color: colorScheme.primary,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                ReorderableDragStartListener(
-                  index: index,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 14,
+                    ReorderableDragStartListener(
+                      index: index,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 12,
+                        ),
+                        child: Icon(
+                          FluentIcons.re_order_24_regular,
+                          color: Daylight.faint,
+                          size: 18,
+                        ),
+                      ),
                     ),
-                    child: Icon(
-                      FluentIcons.re_order_24_regular,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

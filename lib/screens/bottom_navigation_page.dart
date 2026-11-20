@@ -28,8 +28,10 @@ import 'package:musify/constants/app_constants.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/flutter_bottom_sheet.dart'
     show closeCurrentBottomSheet;
+import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/mini_player.dart';
 
 class BottomNavigationPage extends StatefulWidget {
@@ -87,7 +89,33 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
                     children: [
                       if (isLargeScreen)
                         NavigationRail(
+                          backgroundColor: Colors.transparent,
+                          minWidth: 76,
+                          groupAlignment: -0.55,
                           labelType: NavigationRailLabelType.selected,
+                          indicatorColor: Daylight.cobaltSoft,
+                          selectedIconTheme: IconThemeData(
+                            color: Daylight.cobalt,
+                            size: 22,
+                          ),
+                          unselectedIconTheme: IconThemeData(
+                            color: Daylight.muted,
+                            size: 22,
+                          ),
+                          selectedLabelTextStyle: Daylight.ui(
+                            10.5,
+                            color: Daylight.cobalt,
+                            weight: FontWeight.w600,
+                          ),
+                          unselectedLabelTextStyle: Daylight.ui(
+                            10.5,
+                            color: Daylight.muted,
+                            weight: FontWeight.w500,
+                          ),
+                          leading: const Padding(
+                            padding: EdgeInsets.only(top: 18, bottom: 20),
+                            child: DaylightBrandMark(size: 22),
+                          ),
                           destinations: items
                               .map(
                                 (item) => NavigationRailDestination(
@@ -140,23 +168,10 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
                   ),
                 ),
                 bottomNavigationBar: !isLargeScreen
-                    ? NavigationBar(
+                    ? _DaylightTabBar(
+                        items: items,
                         selectedIndex: _getCurrentIndex(items, isOfflineMode),
-                        labelBehavior: languageSetting == const Locale('en', '')
-                            ? NavigationDestinationLabelBehavior
-                                  .onlyShowSelected
-                            : NavigationDestinationLabelBehavior.alwaysHide,
-                        onDestinationSelected: (index) =>
-                            _onTabTapped(index, items),
-                        destinations: items
-                            .map(
-                              (item) => NavigationDestination(
-                                icon: Icon(item.icon),
-                                selectedIcon: Icon(item.selectedIcon),
-                                label: item.label,
-                              ),
-                            )
-                            .toList(),
+                        onSelected: (index) => _onTabTapped(index, items),
                       )
                     : null,
               );
@@ -271,4 +286,95 @@ class _NavigationItem {
   final IconData selectedIcon;
   final String label;
   final int shellIndex;
+}
+
+/// The flat daylight tab row from the concept board.
+class _DaylightTabBar extends StatelessWidget {
+  const _DaylightTabBar({
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<_NavigationItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Daylight.groundBottom.withValues(alpha: 0.94),
+        border: Border(top: BorderSide(color: Daylight.line)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 58,
+          child: Row(
+            children: [
+              for (var index = 0; index < items.length; index++)
+                Expanded(
+                  child: _DaylightTab(
+                    item: items[index],
+                    selected: index == selectedIndex,
+                    onTap: () => onSelected(index),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DaylightTab extends StatelessWidget {
+  const _DaylightTab({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _NavigationItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? Daylight.cobalt : Daylight.muted;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.transparent,
+        highlightColor: Daylight.cobalt.withValues(alpha: 0.04),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 7, bottom: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                selected ? item.selectedIcon : item.icon,
+                size: 21,
+                color: color,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Daylight.ui(
+                  10,
+                  color: color,
+                  weight: selected ? FontWeight.w600 : FontWeight.w500,
+                  height: 1.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -20,6 +20,7 @@
  */
 
 import 'package:material_ui/material_ui.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/widgets/marquee.dart';
 
 class SectionTitle extends StatelessWidget {
@@ -30,25 +31,23 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.only(top: 14, bottom: 8),
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 20, color: colorScheme.primary),
-            const SizedBox(width: 10),
+            Icon(icon, size: 13, color: Daylight.cobalt),
+            const SizedBox(width: 6),
           ],
           Expanded(
             child: MarqueeWidget(
               child: Text(
-                title,
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize:
-                      Theme.of(context).textTheme.titleMedium?.fontSize ?? 16,
-                  fontWeight: FontWeight.w600,
+                title.toUpperCase(),
+                style: Daylight.ui(
+                  10,
+                  color: Daylight.muted,
+                  weight: FontWeight.w600,
+                  letterSpacing: 1.1,
                 ),
               ),
             ),

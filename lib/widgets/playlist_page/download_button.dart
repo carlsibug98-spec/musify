@@ -25,6 +25,7 @@ import 'package:musify/extensions/l10n.dart';
 import 'package:musify/services/common_services.dart';
 import 'package:musify/services/playlist_download_service.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/offline_playlist_dialogs.dart';
 
@@ -98,12 +99,14 @@ class _PlaylistDownloadButtonState extends State<PlaylistDownloadButton> {
         valueListenable: offlinePlaylistService.offlinePlaylists,
         builder: (context, __, ___) {
           if (_isOffline) {
-            return IconButton.filled(
-              icon: Icon(
-                FluentIcons.arrow_download_off_24_filled,
-                color: Theme.of(context).colorScheme.onPrimary,
+            return IconButton(
+              icon: const Icon(FluentIcons.arrow_download_off_24_filled, size: 18),
+              style: IconButton.styleFrom(
+                fixedSize: const Size(42, 42),
+                backgroundColor: Daylight.cobalt,
+                foregroundColor: Colors.white,
+                shape: const CircleBorder(),
               ),
-              iconSize: 24,
               onPressed: () =>
                   showRemoveOfflinePlaylistDialog(context, playlistId),
               tooltip: context.l10n!.removeOffline,
@@ -135,9 +138,15 @@ class _PlaylistDownloadButtonState extends State<PlaylistDownloadButton> {
                 );
               }
 
-              return IconButton.filledTonal(
-                icon: const Icon(FluentIcons.arrow_download_24_filled),
-                iconSize: 24,
+              return IconButton(
+                icon: const Icon(FluentIcons.arrow_download_24_filled, size: 18),
+                style: IconButton.styleFrom(
+                  fixedSize: const Size(42, 42),
+                  backgroundColor: Colors.white,
+                  foregroundColor: Daylight.cobalt,
+                  shape: const CircleBorder(),
+                  side: BorderSide(color: Daylight.lineStrong),
+                ),
                 onPressed: () => _download(context),
                 tooltip: context.l10n!.downloadPlaylist,
               );
@@ -150,23 +159,33 @@ class _PlaylistDownloadButtonState extends State<PlaylistDownloadButton> {
 
   Widget _buildProgress(BuildContext context, DownloadProgress progress) {
     return SizedBox(
-      width: 48,
-      height: 48,
+      width: 46,
+      height: 46,
       child: Stack(
         alignment: Alignment.center,
         children: [
           SizedBox(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             child: CircularProgressIndicator(
               value: progress.isCancelled ? null : progress.progress,
               strokeWidth: 3,
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              color: Daylight.cobalt,
+              backgroundColor: Daylight.cobaltSoft,
             ),
           ),
           if (!progress.isCancelled)
             IconButton(
-              icon: const Icon(FluentIcons.dismiss_24_filled, size: 16),
+              icon: Icon(
+                FluentIcons.dismiss_24_filled,
+                size: 14,
+                color: Daylight.cobalt,
+              ),
+              constraints: const BoxConstraints.tightFor(
+                width: 28,
+                height: 28,
+              ),
+              padding: EdgeInsets.zero,
               onPressed: () =>
                   offlinePlaylistService.cancelDownload(context, playlistId),
               tooltip: context.l10n!.cancel,

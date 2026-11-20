@@ -26,6 +26,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/services/common_services.dart';
 import 'package:musify/services/playlists_manager.dart';
+import 'package:musify/theme/daylight.dart';
 
 /// Likes a playlist, an album or an artist, and follows the liked playlists so
 /// that the same one stays in sync wherever it is shown.
@@ -34,6 +35,7 @@ class PlaylistLikeButton extends StatefulWidget {
     super.key,
     required this.playlistId,
     required this.playlistData,
+    this.asPill = false,
   });
 
   final String playlistId;
@@ -41,6 +43,10 @@ class PlaylistLikeButton extends StatefulWidget {
   /// What to store when the playlist is liked, read on the tap so that a page
   /// still loading its songs stores them once they are there.
   final Map? Function() playlistData;
+
+  /// Renders the action as a "Like" pill, as on the artist header, instead of
+  /// the compact circular button shared with album and playlist pages.
+  final bool asPill;
 
   @override
   State<PlaylistLikeButton> createState() => _PlaylistLikeButtonState();
@@ -93,23 +99,78 @@ class _PlaylistLikeButtonState extends State<PlaylistLikeButton> {
     return ValueListenableBuilder<bool>(
       valueListenable: _isLiked,
       builder: (context, isLiked, __) {
-        final icon = Icon(
-          isLiked ? FluentIcons.heart_24_filled : FluentIcons.heart_24_regular,
-        );
+        final tooltip = isLiked
+            ? context.l10n!.removeFromLikedPlaylists
+            : context.l10n!.addToLikedPlaylists;
 
-        return isLiked
-            ? IconButton.filled(
-                icon: icon,
-                iconSize: 24,
-                onPressed: _toggleLikeStatus,
-                tooltip: context.l10n!.removeFromLikedPlaylists,
-              )
-            : IconButton.filledTonal(
-                icon: icon,
-                iconSize: 24,
-                onPressed: _toggleLikeStatus,
-                tooltip: context.l10n!.addToLikedPlaylists,
-              );
+        if (widget.asPill) {
+          return Tooltip(
+            message: tooltip,
+            child: GestureDetector(
+              onTap: _toggleLikeStatus,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: isLiked ? Daylight.cobalt : Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: isLiked
+                      ? null
+                      : Border.all(color: Daylight.lineStrong),
+                  boxShadow: isLiked ? Daylight.cobaltShadow : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isLiked
+                          ? FluentIcons.heart_24_filled
+                          : FluentIcons.heart_24_regular,
+                      size: 17,
+                      color: isLiked ? Daylight.onAccent : Daylight.ink,
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      isLiked ? context.l10n!.liked : context.l10n!.like,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Daylight.ui(
+                        12,
+                        color: isLiked ? Daylight.onAccent : Daylight.ink,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        return IconButton(
+          icon: Icon(
+            isLiked
+                ? FluentIcons.heart_24_filled
+                : FluentIcons.heart_24_regular,
+            size: 18,
+            color: isLiked ? Colors.white : Daylight.cobalt,
+          ),
+          style: IconButton.styleFrom(
+            fixedSize: const Size(42, 42),
+            backgroundColor: isLiked ? Daylight.cobalt : Colors.white,
+            shape: const CircleBorder(),
+            side: isLiked
+                ? BorderSide.none
+                : BorderSide(color: Daylight.lineStrong),
+            elevation: 0,
+          ),
+          onPressed: _toggleLikeStatus,
+          tooltip: tooltip,
+        );
       },
     );
   }

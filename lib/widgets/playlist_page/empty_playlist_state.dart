@@ -21,6 +21,7 @@
 
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:musify/theme/daylight.dart';
 
 class EmptyPlaylistState extends StatelessWidget {
   const EmptyPlaylistState({
@@ -42,19 +43,20 @@ class EmptyPlaylistState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurface.withAlpha(120),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Daylight.cobaltSoft,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 26, color: Daylight.cobalt),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 16,
-                ),
+                style: Daylight.ui(12, color: Daylight.muted, height: 1.5),
               ),
             ],
           ),

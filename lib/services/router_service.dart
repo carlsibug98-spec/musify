@@ -27,13 +27,17 @@ import 'package:musify/constants/version.dart';
 import 'package:musify/screens/about_page.dart';
 import 'package:musify/screens/artist_page.dart';
 import 'package:musify/screens/bottom_navigation_page.dart';
+import 'package:musify/screens/downloads_page.dart';
 import 'package:musify/screens/equalizer_page.dart';
 import 'package:musify/screens/home_page.dart';
+import 'package:musify/screens/import_spotify_album_page.dart';
 import 'package:musify/screens/import_spotify_playlist_page.dart';
 import 'package:musify/screens/library_page.dart';
+import 'package:musify/screens/lyrics_page.dart';
+import 'package:musify/screens/onboarding_page.dart';
+import 'package:musify/screens/queue_page.dart';
 import 'package:musify/screens/playlist_folder_page.dart';
 import 'package:musify/screens/playlist_page.dart';
-import 'package:musify/screens/radio_stations_page.dart';
 import 'package:musify/screens/search_page.dart';
 import 'package:musify/screens/settings_page.dart';
 import 'package:musify/screens/time_machine_page.dart';
@@ -53,6 +57,21 @@ class NavigationManager {
 
   void _setupRouter() {
     final routes = [
+      GoRoute(
+        path: '/onboarding',
+        pageBuilder: (context, state) =>
+            _pushPage(child: const OnboardingPage(), state: state),
+      ),
+      GoRoute(
+        path: '/queue',
+        pageBuilder: (context, state) =>
+            _pushUpPage(child: const QueuePage(), state: state),
+      ),
+      GoRoute(
+        path: '/lyrics',
+        pageBuilder: (context, state) =>
+            _pushUpPage(child: const LyricsPage(), state: state),
+      ),
       StatefulShellRoute.indexedStack(
         parentNavigatorKey: parentNavigatorKey,
         branches: _getRouteBranches(),
@@ -244,13 +263,22 @@ class NavigationManager {
                   state: state,
                 ),
               ),
+              GoRoute(
+                path: 'playlist/:playlistId',
+                pageBuilder: (context, state) => _pushPage(
+                  child: PlaylistPage(
+                    playlistId: state.pathParameters['playlistId'],
+                  ),
+                  state: state,
+                ),
+              ),
+              GoRoute(
+                path: 'downloads',
+                pageBuilder: (context, state) =>
+                    _pushPage(child: const DownloadsPage(), state: state),
+              ),
               _artistRoute(),
               _albumRoute(),
-              GoRoute(
-                path: 'radioStations',
-                pageBuilder: (context, state) =>
-                    _pushPage(child: const RadioStationsPage(), state: state),
-              ),
             ],
           ),
         ],
@@ -284,6 +312,13 @@ class NavigationManager {
                 path: 'equalizer',
                 pageBuilder: (context, state) =>
                     _pushPage(child: const EqualizerPage(), state: state),
+              ),
+              GoRoute(
+                path: 'import-spotify-album',
+                pageBuilder: (context, state) => _pushPage(
+                  child: const ImportSpotifyAlbumPage(),
+                  state: state,
+                ),
               ),
               GoRoute(
                 path: 'import-spotify-playlist',
@@ -385,6 +420,37 @@ class NavigationManager {
         return FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
           child: child,
+        );
+      },
+    );
+  }
+
+  /// Vertical push used for full-screen music surfaces. The reference player
+  /// presents Lyrics and Queue by sliding them up over the player.
+  static Page<void> _pushUpPage({
+    required Widget child,
+    required GoRouterState state,
+  }) {
+    return CustomTransitionPage<void>(
+      key: state.pageKey,
+      child: child,
+      transitionDuration: const Duration(milliseconds: 240),
+      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.08),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
         );
       },
     );

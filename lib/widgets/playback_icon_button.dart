@@ -24,6 +24,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
+import 'package:musify/widgets/daylight/press_scale.dart';
 
 Widget buildPlaybackIconButton(
   double iconSize,
@@ -78,19 +79,25 @@ Widget buildPlaybackIconButton(
         semanticLabel = isPlaying ? context.l10n!.pause : context.l10n!.play;
       }
 
-      return RawMaterialButton(
-        elevation: 0,
-        onPressed: onPressed,
-        fillColor: backgroundColor,
-        splashColor: Colors.transparent,
-        padding: padding ?? EdgeInsets.all(iconSize * 0.35),
-        shape: const CircleBorder(),
-        constraints: BoxConstraints.tightFor(
-          width: iconSize * 2,
-          height: iconSize * 2,
+      return PressScale(
+        child: RawMaterialButton(
+          elevation: 0,
+          onPressed: onPressed,
+          fillColor: backgroundColor,
+          splashColor: Colors.transparent,
+          padding: padding ?? EdgeInsets.all(iconSize * 0.35),
+          shape: const CircleBorder(),
+          constraints: BoxConstraints.tightFor(
+            width: iconSize * 2,
+            height: iconSize * 2,
+          ),
+          materialTapTargetSize: MaterialTapTargetSize.padded,
+          child: Semantics(
+            label: semanticLabel,
+            button: true,
+            child: iconWidget,
+          ),
         ),
-        materialTapTargetSize: MaterialTapTargetSize.padded,
-        child: Semantics(label: semanticLabel, button: true, child: iconWidget),
       );
     },
   );

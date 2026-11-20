@@ -19,8 +19,6 @@
  *     please visit: https://github.com/gokadzev/Musify
  */
 
-import 'dart:math' as math;
-
 import 'package:audio_service/audio_service.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
@@ -28,6 +26,7 @@ import 'package:musify/main.dart';
 import 'package:musify/models/full_player_state.dart';
 import 'package:musify/models/position_data.dart';
 import 'package:musify/screens/now_playing_page.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/widgets/marquee.dart';
 import 'package:musify/widgets/song_artwork.dart';
 import 'package:rxdart/rxdart.dart';
@@ -50,10 +49,10 @@ final Stream<FullPlayerState> _fullPlayerStateStream =
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
-  static const double playerHeight = 72;
-  static const double _borderRadius = 20;
-  static const double _artworkSize = 52;
-  static const double _artworkRadius = 14;
+  static const double playerHeight = 66;
+  static const double _borderRadius = 14;
+  static const double _artworkSize = 42;
+  static const double _artworkRadius = 21;
 
   @override
   Widget build(BuildContext context) {
@@ -188,56 +187,72 @@ class _MiniPlayerBodyState extends State<_MiniPlayerBody>
             child: Container(
               height: MiniPlayer.playerHeight,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
+                color: Daylight.card,
                 borderRadius: BorderRadius.circular(MiniPlayer._borderRadius),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border: Daylight.hairline,
+                boxShadow: Daylight.floatingShadow,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(MiniPlayer._borderRadius),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    children: [
-                      _ArtworkWidget(metadata: metadata),
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          switchInCurve: Curves.easeIn,
-                          switchOutCurve: Curves.easeOut,
-                          layoutBuilder: (currentChild, previousChildren) =>
-                              Stack(
-                                alignment: Alignment.centerLeft,
-                                children: [
-                                  ...previousChildren,
-                                  if (currentChild != null) currentChild,
-                                ],
-                              ),
-                          transitionBuilder: (child, animation) =>
-                              FadeTransition(opacity: animation, child: child),
-                          child: KeyedSubtree(
-                            key: ValueKey(metadata.id),
-                            child: _MetadataWidget(
-                              title: metadata.title,
-                              artist: metadata.artist,
-                              colorScheme: colorScheme,
-                            ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 2.5,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ColoredBox(color: Daylight.line),
+                          FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: progress.clamp(0.0, 1.0),
+                            child: ColoredBox(color: Daylight.cobalt),
                           ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(9, 5, 7, 5),
+                        child: Row(
+                          children: [
+                            _ArtworkWidget(metadata: metadata),
+                            Expanded(
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                switchInCurve: Curves.easeIn,
+                                switchOutCurve: Curves.easeOut,
+                                layoutBuilder:
+                                    (currentChild, previousChildren) => Stack(
+                                      alignment: Alignment.centerLeft,
+                                      children: [
+                                        ...previousChildren,
+                                        if (currentChild != null) currentChild,
+                                      ],
+                                    ),
+                                transitionBuilder: (child, animation) =>
+                                    FadeTransition(
+                                      opacity: animation,
+                                      child: child,
+                                    ),
+                                child: KeyedSubtree(
+                                  key: ValueKey(metadata.id),
+                                  child: _MetadataWidget(
+                                    title: metadata.title,
+                                    artist: metadata.artist,
+                                    colorScheme: colorScheme,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _ControlsWidget(
+                              playbackState: state.playbackState,
+                              hasNext: widget.hasNext,
+                            ),
+                          ],
                         ),
                       ),
-                      _ControlsWidget(
-                        colorScheme: colorScheme,
-                        playbackState: state.playbackState,
-                        hasNext: widget.hasNext,
-                        progress: progress,
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -255,24 +270,25 @@ class _ArtworkWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: 10),
       child: Hero(
         tag: 'now_playing_artwork',
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(MiniPlayer._artworkRadius),
+            shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+                color: Daylight.ink.withValues(alpha: 0.16),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+                spreadRadius: -3,
               ),
             ],
           ),
           child: SongArtworkWidget(
             metadata: metadata,
             size: MiniPlayer._artworkSize,
-            errorWidgetIconSize: 24,
+            errorWidgetIconSize: 20,
             borderRadius: MiniPlayer._artworkRadius,
           ),
         ),
@@ -307,11 +323,11 @@ class _MetadataWidget extends StatelessWidget {
             pauseDuration: const Duration(seconds: 2),
             child: Text(
               title,
-              style: TextStyle(
-                color: colorScheme.secondary,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.1,
+              style: Daylight.ui(
+                12.5,
+                color: Daylight.ink,
+                weight: FontWeight.w600,
+                height: 1.2,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -321,11 +337,7 @@ class _MetadataWidget extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               artist!,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-              ),
+              style: Daylight.ui(10, color: Daylight.muted, height: 1.2),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -337,40 +349,31 @@ class _MetadataWidget extends StatelessWidget {
 }
 
 class _ControlsWidget extends StatelessWidget {
-  const _ControlsWidget({
-    required this.colorScheme,
-    required this.playbackState,
-    required this.hasNext,
-    required this.progress,
-  });
+  const _ControlsWidget({required this.playbackState, required this.hasNext});
 
-  final ColorScheme colorScheme;
   final PlaybackState playbackState;
   final bool hasNext;
-  final double progress;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _CircularPlayButton(
-          colorScheme: colorScheme,
-          playbackState: playbackState,
-          progress: progress,
-        ),
+        _MiniPlayButton(playbackState: playbackState),
         if (hasNext) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: 2),
           IconButton(
             onPressed: audioHandler.skipToNext,
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             icon: Icon(
               FluentIcons.next_24_filled,
-              color: colorScheme.onSurfaceVariant,
-              size: 24,
+              color: Daylight.muted,
+              size: 21,
             ),
             visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
         ],
       ],
@@ -378,16 +381,10 @@ class _ControlsWidget extends StatelessWidget {
   }
 }
 
-class _CircularPlayButton extends StatelessWidget {
-  const _CircularPlayButton({
-    required this.colorScheme,
-    required this.playbackState,
-    required this.progress,
-  });
+class _MiniPlayButton extends StatelessWidget {
+  const _MiniPlayButton({required this.playbackState});
 
-  final ColorScheme colorScheme;
   final PlaybackState playbackState;
-  final double progress;
 
   @override
   Widget build(BuildContext context) {
@@ -398,124 +395,51 @@ class _CircularPlayButton extends StatelessWidget {
         processingState == AudioProcessingState.buffering;
     final isCompleted = processingState == AudioProcessingState.completed;
 
-    return SizedBox(
-      width: 48,
-      height: 48,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CustomPaint(
-            size: const Size(48, 48),
-            painter: _CircularProgressPainter(
-              progress: progress,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              progressColor: colorScheme.primary,
-              strokeWidth: 3,
-            ),
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: Daylight.cobalt,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x662743E8),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+            spreadRadius: -5,
           ),
-          if (isLoading)
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-              ),
-            )
-          else
-            IconButton(
-              onPressed: isCompleted
-                  ? () => audioHandler.playAgain()
-                  : (isPlaying ? audioHandler.pause : audioHandler.play),
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              icon: Icon(
-                isCompleted
-                    ? FluentIcons.arrow_counterclockwise_24_filled
-                    : (isPlaying
-                          ? FluentIcons.pause_16_filled
-                          : FluentIcons.play_16_filled),
-                color: colorScheme.primary,
-                size: 22,
-              ),
-              visualDensity: VisualDensity.compact,
-            ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isCompleted
+              ? () => audioHandler.playAgain()
+              : (isPlaying ? audioHandler.pause : audioHandler.play),
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(
+                    isCompleted
+                        ? FluentIcons.arrow_counterclockwise_24_filled
+                        : (isPlaying
+                              ? FluentIcons.pause_16_filled
+                              : FluentIcons.play_16_filled),
+                    color: Colors.white,
+                    size: 16,
+                  ),
+          ),
+        ),
       ),
     );
   }
-}
-
-class _CircularProgressPainter extends CustomPainter {
-  _CircularProgressPainter({
-    required this.progress,
-    required this.backgroundColor,
-    required this.progressColor,
-    required this.strokeWidth,
-  });
-
-  final double progress;
-  final Color backgroundColor;
-  final Color progressColor;
-  final double strokeWidth;
-
-  final waveAmplitude = 1.5;
-  final waveFrequency = 12.0;
-  final animationValue = 0.0;
-
-  Path _buildWavyArcPath(Size size, double startAngle, double sweepAngle) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final baseRadius = (size.width - strokeWidth) / 2;
-    final steps = (sweepAngle.abs() * 180 / math.pi).round().clamp(4, 720);
-    final path = Path();
-
-    for (var i = 0; i <= steps; i++) {
-      final t = i / steps;
-      final angle = startAngle + sweepAngle * t;
-      final wave =
-          waveAmplitude * math.sin(waveFrequency * angle + animationValue);
-      final r = baseRadius + wave;
-      final x = cx + r * math.cos(angle);
-      final y = cy + r * math.sin(angle);
-      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-    }
-    return path;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final trackPaint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    canvas.drawPath(
-      _buildWavyArcPath(size, -math.pi / 2, 2 * math.pi),
-      trackPaint,
-    );
-
-    if (progress > 0) {
-      final progressPaint = Paint()
-        ..color = progressColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-
-      canvas.drawPath(
-        _buildWavyArcPath(size, -math.pi / 2, 2 * math.pi * progress),
-        progressPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_CircularProgressPainter old) =>
-      old.progress != progress ||
-      old.backgroundColor != backgroundColor ||
-      old.progressColor != progressColor ||
-      old.animationValue != animationValue;
 }

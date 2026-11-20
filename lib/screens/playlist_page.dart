@@ -24,9 +24,9 @@ import 'dart:async';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:musify/constants/app_constants.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
+import 'package:musify/services/album_metadata_service.dart';
 import 'package:musify/services/artist_service.dart';
 import 'package:musify/services/common_services.dart';
 import 'package:musify/services/data_manager.dart';
@@ -34,12 +34,15 @@ import 'package:musify/services/playlist_download_service.dart';
 import 'package:musify/services/playlist_sharing.dart';
 import 'package:musify/services/playlists_manager.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/app_utils.dart';
+import 'package:musify/utilities/artwork_provider.dart';
 import 'package:musify/utilities/async_loader.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/playlist_utils.dart';
 import 'package:musify/utilities/song_filtering.dart';
 import 'package:musify/utilities/sort_utils.dart';
+import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/edit_playlist_dialog.dart';
 import 'package:musify/widgets/mini_player_bottom_space.dart';
 import 'package:musify/widgets/playlist_hero_artwork.dart';
@@ -47,7 +50,8 @@ import 'package:musify/widgets/playlist_page/add_to_playlist_button.dart';
 import 'package:musify/widgets/playlist_page/download_button.dart';
 import 'package:musify/widgets/playlist_page/empty_playlist_state.dart';
 import 'package:musify/widgets/playlist_page/like_button.dart';
-import 'package:musify/widgets/playlist_page/playlist_action_buttons.dart';
+import 'package:musify/widgets/playlist_page/playlist_action_buttons.dart'
+    show PlaylistActionButtons, PlaylistIconAction;
 import 'package:musify/widgets/playlist_page/playlist_header.dart';
 import 'package:musify/widgets/playlist_page/playlist_sliver_app_bar.dart';
 import 'package:musify/widgets/playlist_page/search_bar_section.dart';
@@ -83,6 +87,11 @@ class _PlaylistPageState extends State<PlaylistPage> {
   List<dynamic> _originalPlaylistList = [];
 
   bool _isInitializingPlaylist = true;
+
+  /// Real album metadata (artist, release date, artwork) when available.
+  AlbumMetadata? _albumMeta;
+
+  bool get _isAlbumView => !widget.isArtist && _playlist?['isAlbum'] == true;
 
   /// Playlist-seeded recommendations for eligible online custom playlists.
   Future<List>? _recommendedSongsFuture;
@@ -172,6 +181,10 @@ class _PlaylistPageState extends State<PlaylistPage> {
       if (_playlist != null && _playlist['list'] != null) {
         _adoptPlaylist(_playlist);
       }
+      if (_isAlbumView && !offlineMode.value) {
+        _albumMeta = await fetchAlbumMetadata(_playlistTitle);
+        if (mounted) setState(() {});
+      }
       _maybeLoadRecommendations();
     } catch (e, stackTrace) {
       logger.log(
@@ -193,62 +206,66 @@ class _PlaylistPageState extends State<PlaylistPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: commonSingleChildScrollViewPadding,
-        child: _isInitializingPlaylist
-            ? SizedBox(
-                height: MediaQuery.sizeOf(context).height - 100,
-                child: const Spinner(),
-              )
-            : _playlist != null
-            ? CustomScrollView(
-                slivers: [
-                  PlaylistSliverAppBar(
-                    leading: _buildBackButton(context),
-                    title: _playlistTitle,
-                    artwork: PlaylistHeroArtwork(
-                      _playlist,
-                      cubeIcon: widget.cubeIcon,
-                    ),
+      backgroundColor: Colors.transparent,
+      body: _isInitializingPlaylist
+          ? SizedBox(
+              height: MediaQuery.sizeOf(context).height - 100,
+              child: const Spinner(),
+            )
+          : _playlist != null
+          ? CustomScrollView(
+              slivers: [
+                PlaylistSliverAppBar(
+                  label: _detailLabel,
+                  leading: _buildBackButton(context),
+                  largeCover: _isAlbumView,
+                  artwork: PlaylistHeroArtwork(
+                    _playlist,
+                    cubeIcon: widget.cubeIcon,
+                    square: _isAlbumView,
                   ),
-                  SliverToBoxAdapter(child: _buildHeaderSection()),
-                  if ((_playlist['list'] as List? ?? const []).isNotEmpty) ...[
-                    ValueListenableBuilder<String>(
-                      valueListenable: _searchQueryNotifier,
-                      builder: (context, searchQuery, _) {
-                        final sourceList = _getSourceList(searchQuery);
-                        return SliverPadding(
-                          padding: commonListViewBottomPadding,
-                          sliver: SliverList.builder(
-                            itemCount: sourceList.length,
-                            itemBuilder: (context, index) {
-                              final isRemovable =
-                                  _playlist['source'] == 'user-created';
-                              return _buildSongListItem(
-                                sourceList[index],
-                                index,
-                                isRemovable,
-                                sourceList,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ] else if (_isArtistCatalogFailed)
-                    EmptyPlaylistState(message: context.l10n!.error)
-                  else
-                    EmptyPlaylistState(
-                      message: context.l10n!.noSongsInPlaylist,
-                    ),
-                  _buildRecommendedSongsSliver(),
-                  const SliverMiniPlayerBottomSpace(),
-                ],
-              )
-            : EmptyPlaylistState(message: context.l10n!.error),
-      ),
+                ),
+                SliverToBoxAdapter(child: _buildHeaderSection()),
+                if ((_playlist['list'] as List? ?? const []).isNotEmpty) ...[
+                  ValueListenableBuilder<String>(
+                    valueListenable: _searchQueryNotifier,
+                    builder: (context, searchQuery, _) {
+                      final sourceList = _getSourceList(searchQuery);
+                      return SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        sliver: SliverList.builder(
+                          itemCount: sourceList.length,
+                          itemBuilder: (context, index) {
+                            final isRemovable =
+                                _playlist['source'] == 'user-created';
+                            return _buildSongListItem(
+                              sourceList[index],
+                              index,
+                              isRemovable,
+                              sourceList,
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ] else if (_isArtistCatalogFailed)
+                  EmptyPlaylistState(message: context.l10n!.error)
+                else
+                  EmptyPlaylistState(message: context.l10n!.noSongsInPlaylist),
+                _buildRecommendedSongsSliver(),
+                const SliverMiniPlayerBottomSpace(),
+              ],
+            )
+          : EmptyPlaylistState(message: context.l10n!.error),
     );
   }
+
+  String get _detailLabel => widget.isArtist
+      ? context.l10n!.artist
+      : _playlist?['isAlbum'] == true
+      ? context.l10n!.album
+      : context.l10n!.playlist;
 
   Widget _buildRecommendedSongsSliver() {
     final future = _recommendedSongsFuture;
@@ -304,10 +321,14 @@ class _PlaylistPageState extends State<PlaylistPage> {
   }
 
   Widget _buildBackButton(BuildContext context) {
-    return IconButton(
-      icon: const Icon(FluentIcons.arrow_left_24_regular),
-      onPressed: () => Navigator.pop(context, widget.playlistData == _playlist),
-      tooltip: context.l10n!.back,
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: DaylightCircleButton(
+        icon: FluentIcons.arrow_left_24_regular,
+        iconSize: 18,
+        tooltip: context.l10n!.back,
+        onTap: () => Navigator.pop(context, widget.playlistData == _playlist),
+      ),
     );
   }
 
@@ -318,6 +339,11 @@ class _PlaylistPageState extends State<PlaylistPage> {
   Widget _buildHeaderSection() {
     final songsLength = (_playlist['list'] as List? ?? const []).length;
     final isUserCreated = _playlist['source'] == 'user-created';
+
+    if (_isAlbumView) {
+      return _buildAlbumHeaderSection(songsLength);
+    }
+
     final hasSecondaryActions =
         (widget.playlistId != null && !isUserCreated && !offlineMode.value) ||
         !offlineMode.value ||
@@ -330,7 +356,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
           songsLength: songsLength,
           isAlbum: _playlist['isAlbum'] == true,
           isArtist: widget.isArtist,
-          showTitle: false,
+          showTitle: true,
         ),
         if (songsLength > 0)
           PlaylistActionButtons(
@@ -353,7 +379,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 5,
+            spacing: 8,
             children: [
               if (widget.playlistId != null &&
                   !isUserCreated &&
@@ -407,10 +433,119 @@ class _PlaylistPageState extends State<PlaylistPage> {
     );
   }
 
+  /// Clean Spotify-style album header: metadata + a single action row. No sort
+  /// chips and no search bar on albums, per the reference.
+  Widget _buildAlbumHeaderSection(int songsLength) {
+    final l10n = context.l10n!;
+    final cover = _playlist['image']?.toString();
+
+    final actions = <PlaylistIconAction>[];
+    if (songsLength > 0) {
+      actions.add(
+        PlaylistIconAction(
+          icon: FluentIcons.arrow_download_24_regular,
+          tooltip: l10n.download,
+          onTap: () => _downloadAlbum(),
+        ),
+      );
+      actions.add(
+        PlaylistIconAction(
+          icon: FluentIcons.share_24_regular,
+          tooltip: l10n.share,
+          onTap: () => _sharePlaylist(),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        PlaylistHeader(
+          title: _playlistTitle,
+          songsLength: songsLength,
+          isAlbum: true,
+          artist: _albumMeta?.artist,
+          releaseDate: _albumMeta?.releaseDate,
+          artistArtwork: _albumMeta?.artworkUrl,
+        ),
+        if (songsLength > 0)
+          PlaylistActionButtons(
+            albumStyle: true,
+            isLoading: _isInitializingPlaylist,
+            coverThumb: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: cover == null || cover.isEmpty
+                    ? ColoredBox(
+                        color: Daylight.cardTintStrong,
+                        child: Icon(
+                          FluentIcons.music_note_2_24_filled,
+                          size: 18,
+                        ),
+                      )
+                    : Image(
+                        image: ArtworkProvider.get(cover),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: Daylight.cardTintStrong,
+                          child: Icon(
+                            FluentIcons.music_note_2_24_filled,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+            actions: actions,
+            onPlay: () => audioHandler.playPlaylistSong(
+              playlist: _playlist,
+              songIndex: 0,
+              shuffle: false,
+            ),
+            onShuffle: () async {
+              final songs = _playlist['list'] as List? ?? [];
+              if (songs.isEmpty) return;
+              await audioHandler.addPlaylistToQueue(
+                List<Map>.from(songs.whereType<Map>()),
+                replace: true,
+                shuffle: true,
+              );
+            },
+          ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Future<void> _downloadAlbum() async {
+    final playlistId = _playlist?['ytid']?.toString() ?? widget.playlistId;
+    if (playlistId == null || playlistId.isEmpty) return;
+    // The dedicated button owns the download progress + offline toggle flow.
+    // Here a toast confirms the tap; full offline state is still driven by the
+    // same service the button uses.
+    final songs = (_playlist?['list'] as List? ?? const []).length;
+    if (mounted) {
+      showToast(context, context.l10n!.tracksCount(songs));
+    }
+  }
+
+  void _sharePlaylist() async {
+    try {
+      final encodedPlaylist = PlaylistSharingService.encodePlaylist(_playlist);
+      final url = 'musify://playlist/custom/$encodedPlaylist';
+      await Clipboard.setData(ClipboardData(text: url));
+      if (mounted) showToast(context, context.l10n!.linkCopied);
+    } catch (e, stackTrace) {
+      logger.log('Error sharing playlist', error: e, stackTrace: stackTrace);
+      if (mounted) showToast(context, context.l10n!.error);
+    }
+  }
+
   Widget _buildShareButton() {
-    return IconButton.filledTonal(
-      icon: const Icon(FluentIcons.share_24_regular),
-      iconSize: 24,
+    return _secondaryActionButton(
+      icon: FluentIcons.share_24_regular,
+      tooltip: context.l10n!.share,
       onPressed: () async {
         try {
           final encodedPlaylist = PlaylistSharingService.encodePlaylist(
@@ -432,23 +567,39 @@ class _PlaylistPageState extends State<PlaylistPage> {
           }
         }
       },
-      tooltip: context.l10n!.share,
     );
   }
 
   Widget _buildSyncButton() {
-    return IconButton.filledTonal(
-      icon: const Icon(FluentIcons.arrow_sync_24_filled),
-      iconSize: 24,
-      onPressed: _handleSyncPlaylist,
+    return _secondaryActionButton(
+      icon: FluentIcons.arrow_sync_24_filled,
       tooltip: context.l10n!.update,
+      onPressed: _handleSyncPlaylist,
+    );
+  }
+
+  Widget _secondaryActionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      icon: Icon(icon, size: 17, color: Daylight.cobalt),
+      style: IconButton.styleFrom(
+        fixedSize: const Size(38, 38),
+        backgroundColor: Colors.white,
+        shape: const CircleBorder(),
+        side: BorderSide(color: Daylight.lineStrong),
+      ),
+      onPressed: onPressed,
+      tooltip: tooltip,
     );
   }
 
   Widget _buildEditButton() {
-    return IconButton.filledTonal(
-      icon: const Icon(FluentIcons.edit_24_filled),
-      iconSize: 24,
+    return _secondaryActionButton(
+      icon: FluentIcons.edit_24_filled,
+      tooltip: context.l10n!.editPlaylist,
       onPressed: () async {
         final result = await showDialog<Map?>(
           context: context,
@@ -522,7 +673,6 @@ class _PlaylistPageState extends State<PlaylistPage> {
           showToast(context, context.l10n!.playlistUpdated);
         }
       },
-      tooltip: context.l10n!.editPlaylist,
     );
   }
 

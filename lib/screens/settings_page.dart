@@ -37,6 +37,7 @@ import 'package:musify/services/settings_manager.dart';
 import 'package:musify/services/update_manager.dart';
 import 'package:musify/theme/app_colors.dart';
 import 'package:musify/theme/app_themes.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/flutter_bottom_sheet.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/language_utils.dart';
@@ -45,9 +46,9 @@ import 'package:musify/utilities/url_launcher.dart';
 import 'package:musify/widgets/bottom_sheet_bar.dart';
 import 'package:musify/widgets/confirmation_dialog.dart';
 import 'package:musify/widgets/custom_bar.dart';
+import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/mini_player_bottom_space.dart';
 import 'package:musify/widgets/section_header.dart';
-import 'package:musify/widgets/shapes/four_sided_cookie_shape.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -60,6 +61,7 @@ class SettingsPage extends StatelessWidget {
 
     final content = Column(
       children: <Widget>[
+        const SizedBox(height: 2),
         _buildPreferencesSection(
           context,
           primaryColor,
@@ -68,23 +70,45 @@ class SettingsPage extends StatelessWidget {
         ),
         if (!offlineMode.value) _buildOnlineFeaturesSection(context),
         _buildOthersSection(context),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
+        Text(
+          'Musify · Daylight',
+          style: Daylight.ui(9.5, color: Daylight.faint),
+        ),
+        const SizedBox(height: 16),
         const MiniPlayerBottomSpace(),
       ],
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n!.settings)),
-      body: SingleChildScrollView(
-        padding: commonSingleChildScrollViewPadding,
-        child: isDesktopPlatform
-            ? Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 880),
-                  child: content,
-                ),
-              )
-            : content,
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          DaylightAppBar(
+            title: context.l10n!.settings,
+            actions: [
+              DaylightCircleButton(
+                icon: FluentIcons.question_circle_24_regular,
+                tooltip: context.l10n!.about,
+                iconSize: 17,
+                onTap: () => context.push('/settings/about'),
+              ),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: isDesktopPlatform
+                  ? Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 880),
+                        child: content,
+                      ),
+                    )
+                  : content,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -107,19 +131,17 @@ class SettingsPage extends StatelessWidget {
           context.l10n!.accentColor,
           FluentIcons.color_24_regular,
           borderRadius: commonCustomBarRadiusFirst,
-          trailing: isDesktopPlatform
-              ? Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: primaryColorSetting,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-                )
-              : null,
+          trailing: Container(
+            width: isDesktopPlatform ? 26 : 22,
+            height: isDesktopPlatform ? 26 : 22,
+            decoration: BoxDecoration(
+              color: Daylight.cobalt,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+          ),
           onTap: () => _showAccentColorPicker(context),
         ),
         CustomBar(
@@ -315,9 +337,21 @@ class SettingsPage extends StatelessWidget {
           icon: FluentIcons.toolbox_24_filled,
         ),
         CustomBar(
+          context.l10n!.downloads,
+          FluentIcons.arrow_download_24_regular,
+          description: context.l10n!.onThisPhone,
+          borderRadius: commonCustomBarRadiusFirst,
+          onTap: () => context.push('/library/downloads'),
+        ),
+        CustomBar(
+          context.l10n!.startListening,
+          FluentIcons.play_circle_24_regular,
+          description: context.l10n!.onboardingTitle,
+          onTap: () => context.push('/onboarding'),
+        ),
+        CustomBar(
           context.l10n!.clearCache,
           FluentIcons.broom_24_regular,
-          borderRadius: commonCustomBarRadiusFirst,
           onTap: () async {
             final cleared = await clearCache();
             showToast(
@@ -393,6 +427,11 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
         CustomBar(
+          context.l10n!.importSpotifyAlbum,
+          FluentIcons.music_note_2_24_regular,
+          onTap: () => context.push('/settings/import-spotify-album'),
+        ),
+        CustomBar(
           context.l10n!.importSpotifyPlaylist,
           FluentIcons.arrow_upload_24_regular,
           onTap: () => context.push('/settings/import-spotify-playlist'),
@@ -466,52 +505,45 @@ class SettingsPage extends StatelessWidget {
   }
 
   Widget _buildSponsorSection(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Column(
       children: [
         SectionHeader(
           title: context.l10n!.becomeSponsor,
           icon: FluentIcons.heart_24_filled,
         ),
-        Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          elevation: 0,
-          color: colorScheme.primaryContainer,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: InkWell(
-            onTap: () => launchURL(Uri.parse('https://ko-fi.com/gokadzev')),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-              child: Row(
-                children: [
-                  FourSidedCookieShape(
-                    size: 44,
-                    color: colorScheme.onPrimaryContainer.withValues(
-                      alpha: 0.14,
-                    ),
-                    child: Icon(
-                      FluentIcons.heart_24_filled,
-                      color: colorScheme.onPrimaryContainer,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      context.l10n!.sponsorProject,
-                      style: TextStyle(
-                        color: colorScheme.onPrimaryContainer,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+        DaylightCard(
+          color: Daylight.cobaltSoft,
+          border: false,
+          shadow: false,
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          onTap: () => launchURL(Uri.parse('https://ko-fi.com/gokadzev')),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  FluentIcons.heart_24_filled,
+                  color: Daylight.cobalt,
+                  size: 22,
+                ),
               ),
-            ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  context.l10n!.sponsorProject,
+                  style: Daylight.ui(
+                    13,
+                    color: Daylight.ink,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -570,8 +602,34 @@ class SettingsPage extends StatelessWidget {
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
           ),
-          itemCount: availableColors.length,
+          itemCount: availableColors.length + 1,
           itemBuilder: (context, index) {
+            if (index == availableColors.length) {
+              return InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => _showCustomAccentColorDialog(context),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: SweepGradient(
+                      colors: [
+                        Color(0xFFF44336),
+                        Color(0xFFFFC107),
+                        Color(0xFF4CAF50),
+                        Color(0xFF2196F3),
+                        Color(0xFF9C27B0),
+                        Color(0xFFF44336),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(
+                    FluentIcons.add_24_regular,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              );
+            }
             final color = availableColors[index];
             final isSelected = color == primaryColorSetting;
 
@@ -620,8 +678,33 @@ class SettingsPage extends StatelessWidget {
           ),
           shrinkWrap: true,
           physics: const BouncingScrollPhysics(),
-          itemCount: availableColors.length,
+          itemCount: availableColors.length + 1,
           itemBuilder: (context, index) {
+            if (index == availableColors.length) {
+              return GestureDetector(
+                onTap: () => _showCustomAccentColorDialog(context),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: SweepGradient(
+                      colors: [
+                        Color(0xFFF44336),
+                        Color(0xFFFFC107),
+                        Color(0xFF4CAF50),
+                        Color(0xFF2196F3),
+                        Color(0xFF9C27B0),
+                        Color(0xFFF44336),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(
+                    FluentIcons.add_24_regular,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              );
+            }
             final color = availableColors[index];
             final isSelected = color == primaryColorSetting;
 
@@ -650,6 +733,197 @@ class SettingsPage extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  /// RGB picker so any accent color can be chosen, not only the swatches.
+  void _showCustomAccentColorDialog(BuildContext context) {
+    final pageContext = context;
+    final argb = primaryColorSetting.toARGB32();
+    var red = (argb >> 16) & 0xFF;
+    var green = (argb >> 8) & 0xFF;
+    var blue = argb & 0xFF;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final color = Color.fromARGB(255, red, green, blue);
+            final hex =
+                '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
+            Widget channel({
+              required String label,
+              required int value,
+              required Color channelColor,
+              required ValueChanged<int> onChanged,
+            }) {
+              return Row(
+                children: [
+                  SizedBox(
+                    width: 18,
+                    child: Text(
+                      label,
+                      style: Daylight.ui(
+                        12,
+                        color: Daylight.muted,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 3,
+                        activeTrackColor: channelColor,
+                        inactiveTrackColor: Daylight.line,
+                        thumbColor: channelColor,
+                        overlayColor: channelColor.withValues(alpha: 0.12),
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 7,
+                        ),
+                      ),
+                      child: Slider(
+                        value: value.toDouble(),
+                        max: 255,
+                        divisions: 255,
+                        onChanged: (next) =>
+                            setDialogState(() => onChanged(next.round())),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 34,
+                    child: Text(
+                      '$value',
+                      textAlign: TextAlign.right,
+                      style: Daylight.ui(
+                        12,
+                        color: Daylight.ink,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              title: Text(
+                context.l10n!.accentColor,
+                style: Daylight.display(
+                  18,
+                  color: Daylight.ink,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              content: SizedBox(
+                width: 320,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 76,
+                      height: 76,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.32),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      hex,
+                      style: Daylight.ui(
+                        13,
+                        color: Daylight.ink,
+                        weight: FontWeight.w600,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    channel(
+                      label: 'R',
+                      value: red,
+                      channelColor: const Color(0xFFE5484D),
+                      onChanged: (value) => red = value,
+                    ),
+                    channel(
+                      label: 'G',
+                      value: green,
+                      channelColor: const Color(0xFF2F9E44),
+                      onChanged: (value) => green = value,
+                    ),
+                    channel(
+                      label: 'B',
+                      value: blue,
+                      channelColor: const Color(0xFF1971C2),
+                      onChanged: (value) => blue = value,
+                    ),
+                  ],
+                ),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(
+                    context.l10n!.cancel,
+                    style: Daylight.ui(
+                      13,
+                      color: Daylight.muted,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: color.computeLuminance() > 0.52
+                        ? Daylight.ink
+                        : Colors.white,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 11,
+                    ),
+                  ),
+                  onPressed: () {
+                    addOrUpdateData<int>(
+                      'settings',
+                      'accentColor',
+                      color.toARGB32(),
+                    );
+                    Musify.updateAppState(
+                      pageContext,
+                      newAccentColor: color,
+                      useSystemColor: false,
+                    );
+                    Navigator.pop(dialogContext);
+                    showToast(pageContext, pageContext.l10n!.accentChangeMsg);
+                  },
+                  child: Text(
+                    context.l10n!.apply,
+                    style: Daylight.ui(13, weight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

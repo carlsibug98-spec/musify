@@ -22,10 +22,11 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:musify/constants/app_constants.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/theme/daylight.dart';
+import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/mini_player_bottom_space.dart';
 
 class EqualizerPage extends StatefulWidget {
@@ -192,245 +193,219 @@ class _EqualizerPageState extends State<EqualizerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.l10n!.equalizer),
-        actions: [
-          IconButton(
-            icon: const Icon(FluentIcons.arrow_clockwise_24_filled),
-            tooltip: context.l10n!.equalizerResetBands,
-            onPressed: () async {
-              await audioHandler.resetEqualizerBands();
-              final params = _params;
-              if (!mounted || params == null) return;
-              setState(() {
-                _gains = List<double>.filled(params.bands.length, 0);
-                _activePreset = null;
-              });
-            },
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _params == null
-          ? Center(
-              child: Padding(
-                padding: commonSingleChildScrollViewPadding,
-                child: Text(
-                  context.l10n!.equalizerInitFailed,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            )
-          : ListView(
-              padding: commonSingleChildScrollViewPadding,
-              children: [
-                // Enable/Disable Section
-                Card.filled(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.l10n!.equalizerEnable,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(color: colorScheme.onSurface),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _enabled
-                                    ? context.l10n!.equalizerEnabledHint
-                                    : context.l10n!.equalizerDisabledHint,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch.adaptive(
-                          value: _enabled,
-                          onChanged: (value) async {
-                            await audioHandler.setEqualizerEnabled(value);
-                            if (!mounted) return;
-                            setState(() => _enabled = value);
-                          },
-                        ),
-                      ],
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          DaylightAppBar(
+            title: context.l10n!.equalizer,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: TextButton(
+                  onPressed: () async {
+                    await audioHandler.resetEqualizerBands();
+                    final params = _params;
+                    if (!mounted || params == null) return;
+                    setState(() {
+                      _gains = List<double>.filled(params.bands.length, 0);
+                      _activePreset = null;
+                    });
+                  },
+                  child: Text(
+                    context.l10n!.equalizerResetBands,
+                    style: Daylight.ui(
+                      11.5,
+                      color: Daylight.cobalt,
+                      weight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Presets Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            ],
+          ),
+          Expanded(
+            child: _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(color: Daylight.cobalt),
+                  )
+                : _params == null
+                ? DaylightEmptyState(
+                    title: context.l10n!.equalizer,
+                    message: context.l10n!.equalizerInitFailed,
+                    icon: FluentIcons.options_24_regular,
+                  )
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                     children: [
-                      Text(
-                        context.l10n!.equalizerPresets,
-                        style: Theme.of(context).textTheme.titleMedium,
+                      DaylightCard(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    context.l10n!.equalizerEnable,
+                                    style: Daylight.ui(
+                                      13,
+                                      color: Daylight.ink,
+                                      weight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    _enabled
+                                        ? context.l10n!.equalizerEnabledHint
+                                        : context.l10n!.equalizerDisabledHint,
+                                    style: Daylight.ui(
+                                      10.5,
+                                      color: Daylight.muted,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            DaylightToggle(
+                              value: _enabled,
+                              onChanged: (value) async {
+                                await audioHandler.setEqualizerEnabled(value);
+                                if (!mounted) return;
+                                setState(() => _enabled = value);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 18),
+                      Text(
+                        context.l10n!.equalizerPresets.toUpperCase(),
+                        style: Daylight.ui(
+                          9.5,
+                          color: Daylight.muted,
+                          weight: FontWeight.w600,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: _presetIds.map((presetId) {
                           final isActive = _activePreset == presetId;
-                          return FilledButton(
-                            onPressed: () => _applyPreset(presetId),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: isActive
-                                  ? colorScheme.primary
-                                  : colorScheme.surfaceContainerHighest,
-                              foregroundColor: isActive
-                                  ? colorScheme.onPrimary
-                                  : colorScheme.onSurface,
-                              elevation: isActive ? 2 : 0,
-                            ),
-                            child: Text(
-                              _getPresetLocalizedName(context, presetId),
-                            ),
+                          return DaylightPill(
+                            label: _getPresetLocalizedName(context, presetId),
+                            selected: isActive,
+                            onTap: () => _applyPreset(presetId),
                           );
                         }).toList(),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // Bands Section
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            context.l10n!.equalizerBands,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      const SizedBox(height: 18),
+                      DaylightCard(
                         child: Column(
-                          children: List.generate(_params!.bands.length, (
-                            index,
-                          ) {
-                            final band = _params!.bands[index];
-                            final gain = _gains[index];
-                            final min = _params!.minDecibels;
-                            final max = _params!.maxDecibels;
-                            final isLast = index == _params!.bands.length - 1;
-
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: isLast ? 16 : 12,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              context.l10n!.equalizerBands,
+                              style: Daylight.ui(
+                                13,
+                                color: Daylight.ink,
+                                weight: FontWeight.w600,
                               ),
-                              child: Card.filled(
-                                color: colorScheme.surface,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            _formatFrequency(
-                                              band.centerFrequency,
-                                            ),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleSmall
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  colorScheme.primaryContainer,
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              '${gain.toStringAsFixed(1)} dB',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelSmall
-                                                  ?.copyWith(
-                                                    color: colorScheme
-                                                        .onPrimaryContainer,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Slider.adaptive(
-                                        value: gain.clamp(min, max),
-                                        min: min,
-                                        max: max,
-                                        divisions: ((max - min) * 2).round(),
-                                        label: '${gain.toStringAsFixed(1)} dB',
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _gains[index] = value;
-                                            _activePreset = null;
-                                          });
-                                        },
-                                        onChangeEnd: (value) async {
-                                          await audioHandler
-                                              .setEqualizerBandGain(
-                                                index,
-                                                value,
-                                              );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
+                            ),
+                            const SizedBox(height: 12),
+                            for (var index = 0;
+                                index < _params!.bands.length;
+                                index++)
+                              _buildBandRow(index),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      const MiniPlayerBottomSpace(),
                     ],
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBandRow(int index) {
+    final band = _params!.bands[index];
+    final gain = _gains[index];
+    final min = _params!.minDecibels;
+    final max = _params!.maxDecibels;
+    final isLast = index == _params!.bands.length - 1;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _formatFrequency(band.centerFrequency),
+                style: Daylight.ui(
+                  11,
+                  color: Daylight.muted,
+                  weight: FontWeight.w600,
                 ),
-                const SizedBox(height: 12),
-                const MiniPlayerBottomSpace(),
-              ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Daylight.cobaltSoft,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${gain.toStringAsFixed(1)} dB',
+                  style: Daylight.ui(
+                    9.5,
+                    color: Daylight.cobalt,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 3,
+              activeTrackColor: Daylight.cobalt,
+              inactiveTrackColor: Daylight.lineStrong.withValues(alpha: 0.6),
+              thumbColor: Colors.white,
+              overlayColor: Daylight.cobalt.withValues(alpha: 0.08),
+              thumbShape: const RoundSliderThumbShape(
+                enabledThumbRadius: 6,
+                elevation: 1.5,
+              ),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+              trackShape: const RoundedRectSliderTrackShape(),
             ),
+            child: Slider(
+              value: gain.clamp(min, max),
+              min: min,
+              max: max,
+              divisions: ((max - min) * 2).round(),
+              label: '${gain.toStringAsFixed(1)} dB',
+              onChanged: (value) {
+                setState(() {
+                  _gains[index] = value;
+                  _activePreset = null;
+                });
+              },
+              onChangeEnd: (value) async {
+                await audioHandler.setEqualizerBandGain(index, value);
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

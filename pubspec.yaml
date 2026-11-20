@@ -70,3 +70,17 @@ flutter:
     - family: paytoneOne
       fonts:
         - asset: assets/fonts/paytone/PaytoneOne-Regular.ttf
+    - family: Bricolage Grotesque
+      fonts:
+        - asset: assets/fonts/daylight/BricolageGrotesque-600.ttf
+          weight: 600
+        - asset: assets/fonts/daylight/BricolageGrotesque-700.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/daylight/Inter-400.ttf
+          weight: 400
+        - asset: assets/fonts/daylight/Inter-500.ttf
+          weight: 500
+        - asset: assets/fonts/daylight/Inter-600.ttf
+          weight: 600

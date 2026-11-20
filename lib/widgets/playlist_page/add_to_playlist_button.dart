@@ -19,9 +19,12 @@
  *     please visit: https://github.com/gokadzev/Musify
  */
 
+import 'dart:async';
+
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/playlist_dialogs.dart';
 
@@ -59,9 +62,15 @@ class _PlaylistAddToPlaylistButtonState
       );
     }
 
-    return IconButton.filledTonal(
-      icon: const Icon(FluentIcons.album_add_24_regular),
-      iconSize: 24,
+    return IconButton(
+      icon: const Icon(FluentIcons.album_add_24_regular, size: 18),
+      style: IconButton.styleFrom(
+        fixedSize: const Size(42, 42),
+        backgroundColor: Colors.white,
+        foregroundColor: Daylight.cobalt,
+        shape: const CircleBorder(),
+        side: BorderSide(color: Daylight.lineStrong),
+      ),
       onPressed: _resolveAndAdd,
       tooltip: context.l10n!.addToPlaylist,
     );
@@ -93,6 +102,6 @@ class _PlaylistAddToPlaylistButtonState
       return;
     }
 
-    showAddToPlaylistDialog(context, songs: songs);
+    unawaited(showAddToPlaylistDialog(context, songs: songs));
   }
 }

@@ -29,6 +29,7 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:musify/constants/clients.dart';
 import 'package:musify/main.dart' show logger;
+import 'package:musify/models/song_lyrics.dart';
 import 'package:musify/services/data_manager.dart';
 import 'package:musify/services/io_service.dart';
 import 'package:musify/services/lyrics_manager.dart';
@@ -45,13 +46,6 @@ List globalSongs = [];
 ValueNotifier<List> userLikedSongsList = ValueNotifier<List>(
   Hive.box('user').get('likedSongs', defaultValue: []),
 );
-
-ValueNotifier<List<String>> userLikedRadioStations =
-    ValueNotifier<List<String>>(
-      List<String>.from(
-        Hive.box('user').get('likedRadioStations', defaultValue: []),
-      ),
-    );
 
 ValueNotifier<List> userRecentlyPlayed = ValueNotifier<List>(
   Hive.box('user').get('recentlyPlayedSongs', defaultValue: []),
@@ -82,6 +76,7 @@ var _songLikeUpdateToken = 0;
 final _latestSongLikeUpdateTokens = <String, int>{};
 
 final lyrics = ValueNotifier<String?>(null);
+final songLyrics = ValueNotifier<SongLyrics?>(null);
 String? lastFetchedLyrics;
 
 void reloadSongLibraryStateFromStorage() {
@@ -490,34 +485,6 @@ bool isPlaylistAlreadyLiked(playlistIdToCheck) {
   );
 }
 
-bool isRadioStationLiked(String radioStationId) {
-  return userLikedRadioStations.value.contains(radioStationId);
-}
-
-Future<void> addRadioStationToLiked(String radioStationId) async {
-  if (!userLikedRadioStations.value.contains(radioStationId)) {
-    final updatedList = List<String>.from(userLikedRadioStations.value)
-      ..add(radioStationId);
-    userLikedRadioStations.value = updatedList;
-    await addOrUpdateData<List<String>>(
-      'user',
-      'likedRadioStations',
-      updatedList,
-    );
-  }
-}
-
-Future<void> removeRadioStationFromLiked(String radioStationId) async {
-  if (userLikedRadioStations.value.contains(radioStationId)) {
-    final updatedList = List<String>.from(userLikedRadioStations.value)
-      ..remove(radioStationId);
-    userLikedRadioStations.value = updatedList;
-    unawaited(
-      addOrUpdateData<List<String>>('user', 'likedRadioStations', updatedList),
-    );
-  }
-}
-
 bool isSongAlreadyOffline(songIdToCheck) {
   final songId = songIdToCheck?.toString();
   return songId != null && _cachedOfflineSongIds.contains(songId);
@@ -805,24 +772,57 @@ Future<Map<String, dynamic>> getSongDetails(
   }
 }
 
-Future<String?> getSongLyrics(String? artist, String title) async {
-  if (artist == null) return null;
-  if (lastFetchedLyrics != '$artist - $title') {
-    lyrics.value = null;
-    var _lyrics = await LyricsManager().fetchLyrics(artist, title);
-    if (_lyrics != null) {
-      _lyrics = _lyrics.replaceAll(RegExp(r'\n{4}'), '\n\n');
-      _lyrics = _lyrics.replaceAll(RegExp(r'\n{2}'), '\n');
-      lyrics.value = _lyrics;
-    } else {
-      return null;
-    }
+/// Fetches and caches lyrics for a song. Returns the full result so callers
+/// can use the timestamps when a synced source was found.
+Future<SongLyrics?> getSongLyricsData(
+  String? artist,
+  String title, {
+  Duration? duration,
+  String? album,
+}) async {
+  if (artist == null || artist.trim().isEmpty) return null;
 
-    lastFetchedLyrics = '$artist - $title';
-    return _lyrics;
-  }
+  final key =
+      '$artist - $title - ${album ?? ''} - ${duration?.inSeconds ?? 0}';
+  if (lastFetchedLyrics == key) return songLyrics.value;
 
-  return lyrics.value;
+  lyrics.value = null;
+  songLyrics.value = null;
+
+  final result = await LyricsManager().fetchSongLyrics(
+    artist,
+    title,
+    duration: duration,
+    album: album,
+  );
+  if (result == null || result.plain.isEmpty) return null;
+
+  final cleaned = result.plain
+      .replaceAll(RegExp(r'\n{4}'), '\n\n')
+      .replaceAll(RegExp(r'\n{2}'), '\n')
+      .trim();
+
+  final cleanedResult = SongLyrics(plain: cleaned, timed: result.timed);
+  lyrics.value = cleaned;
+  songLyrics.value = cleanedResult;
+  lastFetchedLyrics = key;
+  return cleanedResult;
+}
+
+/// Plain-text lyrics only, for callers that do not need timestamps.
+Future<String?> getSongLyrics(
+  String? artist,
+  String title, {
+  Duration? duration,
+  String? album,
+}) async {
+  final data = await getSongLyricsData(
+    artist,
+    title,
+    duration: duration,
+    album: album,
+  );
+  return data?.plain;
 }
 
 Future<bool> makeSongOffline(dynamic song) async {

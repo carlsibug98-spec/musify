@@ -21,6 +21,7 @@
 
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:musify/theme/daylight.dart';
 
 class CustomSearchBar extends StatefulWidget {
   const CustomSearchBar({
@@ -46,93 +47,97 @@ class CustomSearchBar extends StatefulWidget {
 class _CustomSearchBarState extends State<CustomSearchBar> {
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: SearchBar(
-        elevation: WidgetStateProperty.all(0),
-        shadowColor: WidgetStateProperty.all(Colors.transparent),
-        backgroundColor: WidgetStateProperty.all(
-          colorScheme.surfaceContainerHigh,
-        ),
-        overlayColor: WidgetStateProperty.all(
-          colorScheme.primary.withValues(alpha: 0.08),
-        ),
-        shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        padding: WidgetStateProperty.all(
-          const EdgeInsets.symmetric(horizontal: 16),
-        ),
-        hintText: widget.labelText,
-        hintStyle: WidgetStateProperty.all(
-          TextStyle(
-            color: colorScheme.onSurfaceVariant,
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        textStyle: WidgetStateProperty.all(
-          TextStyle(
-            color: colorScheme.onSurface,
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        leading: Icon(
-          FluentIcons.search_24_regular,
-          color: colorScheme.onSurfaceVariant,
-          size: 22,
-        ),
-        onSubmitted: (String value) {
-          widget.onSubmitted(value);
-          widget.focusNode.unfocus();
-        },
-        onChanged: widget.onChanged != null
-            ? (value) async {
-                widget.onChanged!(value);
-                setState(() {});
-              }
-            : null,
-        textInputAction: TextInputAction.search,
-        controller: widget.controller,
-        focusNode: widget.focusNode,
-        trailing: [
-          if (widget.controller.text.isNotEmpty)
-            IconButton(
-              icon: Icon(
-                FluentIcons.dismiss_24_regular,
-                color: colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
-              onPressed: () {
-                widget.controller.clear();
-                widget.onChanged?.call('');
-                setState(() {});
-              },
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Daylight.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Daylight.hairline,
+          boxShadow: [
+            BoxShadow(
+              color: Daylight.ink.withValues(alpha: 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+              spreadRadius: -8,
             ),
-          if (widget.loadingProgressNotifier != null)
-            ValueListenableBuilder<bool>(
-              valueListenable: widget.loadingProgressNotifier!,
-              builder: (_, value, __) {
-                if (value) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                  );
+          ],
+        ),
+        child: SearchBar(
+          elevation: WidgetStateProperty.all(0),
+          shadowColor: WidgetStateProperty.all(Colors.transparent),
+          backgroundColor: WidgetStateProperty.all(Colors.transparent),
+          overlayColor: WidgetStateProperty.all(
+            Daylight.cobalt.withValues(alpha: 0.05),
+          ),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          padding: WidgetStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 12),
+          ),
+          hintText: widget.labelText,
+          hintStyle: WidgetStateProperty.all(
+            Daylight.ui(12.5, color: Daylight.faint),
+          ),
+          textStyle: WidgetStateProperty.all(
+            Daylight.ui(12.5, color: Daylight.ink),
+          ),
+          leading: Icon(
+            FluentIcons.search_24_regular,
+            color: Daylight.muted,
+            size: 18,
+          ),
+          onSubmitted: (String value) {
+            widget.onSubmitted(value);
+            widget.focusNode.unfocus();
+          },
+          onChanged: widget.onChanged != null
+              ? (value) async {
+                  widget.onChanged!(value);
+                  setState(() {});
                 }
-                return const SizedBox.shrink();
-              },
-            ),
-        ],
+              : null,
+          textInputAction: TextInputAction.search,
+          controller: widget.controller,
+          focusNode: widget.focusNode,
+          trailing: [
+            if (widget.controller.text.isNotEmpty)
+              IconButton(
+                icon: Icon(
+                  FluentIcons.dismiss_circle_16_filled,
+                  color: Daylight.faint,
+                  size: 16,
+                ),
+                visualDensity: VisualDensity.compact,
+                onPressed: () {
+                  widget.controller.clear();
+                  widget.onChanged?.call('');
+                  setState(() {});
+                },
+              ),
+            if (widget.loadingProgressNotifier != null)
+              ValueListenableBuilder<bool>(
+                valueListenable: widget.loadingProgressNotifier!,
+                builder: (_, value, __) {
+                  if (value) {
+                    return Padding(
+                      padding: EdgeInsets.only(right: 8),
+                      child: SizedBox(
+                        height: 15,
+                        width: 15,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Daylight.cobalt,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

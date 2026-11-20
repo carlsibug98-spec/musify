@@ -23,6 +23,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/constants/app_constants.dart';
 import 'package:musify/extensions/l10n.dart';
+import 'package:musify/services/common_services.dart';
 import 'package:musify/services/playlists_manager.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/playlist_image_picker.dart';
@@ -344,12 +345,13 @@ void showCreatePlaylistDialog(
   );
 }
 
-void showAddToPlaylistDialog(
+Future<bool> showAddToPlaylistDialog(
   BuildContext context, {
   dynamic song,
   List<dynamic>? songs,
-}) {
-  showDialog(
+  bool showLikedSongs = true,
+}) async {
+  final addedToLiked = await showDialog<bool>(
     context: context,
     builder: (BuildContext context) {
       final colorScheme = Theme.of(context).colorScheme;
@@ -390,35 +392,47 @@ void showAddToPlaylistDialog(
                   )
                   .toList();
               final topLevelPlaylists = getPlaylistsNotInFolders();
-
-              final hasAny =
-                  (folders.isNotEmpty) || (topLevelPlaylists.isNotEmpty);
-
-              if (!hasAny) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32),
-                      child: Text(
-                        context.l10n!.noCustomPlaylists,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
-                );
-              }
+              final likedOffset = showLikedSongs ? 1 : 0;
 
               return ListView.builder(
-                itemCount: folders.length + topLevelPlaylists.length,
+                itemCount: likedOffset + folders.length + topLevelPlaylists.length,
                 shrinkWrap: true,
                 itemBuilder: (context, index) {
-                  if (index < folders.length) {
-                    final folder = folders[index];
+                  if (showLikedSongs && index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: DialogItem(
+                        icon: FluentIcons.heart_24_filled,
+                        iconColor: colorScheme.primary,
+                        iconBgColor: colorScheme.primaryContainer,
+                        label: context.l10n!.likedSongs,
+                        onTap: () async {
+                          if (song != null) {
+                            await updateSongLikeStatus(
+                              song['ytid'] ?? song['id'],
+                              true,
+                              songData: song is Map ? song : null,
+                            );
+                          } else if (songs != null && songs.isNotEmpty) {
+                            for (final item in songs) {
+                              await updateSongLikeStatus(
+                                item['ytid'] ?? item['id'],
+                                true,
+                                songData: item is Map ? item : null,
+                              );
+                            }
+                          }
+                          if (!context.mounted) return;
+                          showToast(context, context.l10n!.addedToLikedSongs);
+                          Navigator.pop(context, true);
+                        },
+                      ),
+                    );
+                  }
+
+                  final adjustedIndex = index - likedOffset;
+                  if (adjustedIndex < folders.length) {
+                    final folder = folders[adjustedIndex];
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -499,7 +513,7 @@ void showAddToPlaylistDialog(
                     );
                   }
 
-                  final playlistIndex = index - folders.length;
+                  final playlistIndex = adjustedIndex - folders.length;
                   final playlist = topLevelPlaylists[playlistIndex];
 
                   return Padding(
@@ -560,4 +574,6 @@ void showAddToPlaylistDialog(
       );
     },
   );
+
+  return addedToLiked ?? false;
 }

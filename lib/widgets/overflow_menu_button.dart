@@ -31,6 +31,7 @@ class OverflowMenuButton<T> extends StatelessWidget {
     this.borderRadius,
     this.iconSize = 24,
     this.color,
+    this.tooltip,
   });
 
   final void Function(T value) onSelected;
@@ -40,6 +41,7 @@ class OverflowMenuButton<T> extends StatelessWidget {
   final double iconSize;
   final Color? color;
   final BorderRadius? borderRadius;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class OverflowMenuButton<T> extends StatelessWidget {
     return PopupMenuButton<T>(
       borderRadius: borderRadius ?? BorderRadius.circular(12),
       padding: EdgeInsets.zero,
+      tooltip: tooltip,
       onSelected: onSelected,
       itemBuilder: itemBuilder,
       icon: Icon(

@@ -204,3 +204,29 @@ void reloadSettingsFromStorage() {
     repeatNotifier.value = AudioServiceRepeatMode.values[restoredRepeatIndex];
   }
 }
+
+/// Stable storage key for a song's lyric timing adjustment.
+String lyricsOffsetKey(MediaItem metadata) {
+  final ytid = metadata.extras?['ytid']?.toString() ?? '';
+  if (ytid.isNotEmpty) return ytid;
+  return '${metadata.artist ?? ''}|${metadata.title}';
+}
+
+/// Per-song lyric timing adjustment, in milliseconds. Positive values delay
+/// the lyrics; negative values make them appear earlier.
+int getLyricsOffset(String songKey) {  final value = Hive.box('settings').get(
+    'lyricsOffset:$songKey',
+    defaultValue: 0,
+  );
+  return value is int ? value : 0;
+}
+
+Future<void> setLyricsOffset(String songKey, int milliseconds) async {
+  final box = Hive.box('settings');
+  final key = 'lyricsOffset:$songKey';
+  if (milliseconds == 0) {
+    await box.delete(key);
+  } else {
+    await box.put(key, milliseconds.clamp(-60000, 60000));
+  }
+}
