@@ -481,7 +481,6 @@ class _SongBarState extends State<SongBar> {
                   artist: _songArtist,
                   plays: plays,
                   colorScheme: colorScheme,
-                  likeStatus: _songLikeStatus,
                   offlineStatus: _songOfflineStatus,
                 ),
               ),
@@ -498,22 +497,46 @@ class _SongBarState extends State<SongBar> {
                   onPressed: widget.onAdd,
                 )
               else
-                OverflowMenuButton<String>(
-                  iconSize: 19,
-                  color: Daylight.faint,
-                  onSelected: (value) => _handleSongMenuAction(
-                    context: context,
-                    value: value,
-                    song: widget.song,
-                    ytid: _ytid,
-                    songLikeStatus: _songLikeStatus,
-                    songOfflineStatus: _songOfflineStatus,
-                    songDownloadStatus: _songDownloadStatus,
-                    onRemove: widget.onRemove,
-                    onRename: () => _handleRenameSong(context),
-                  ),
-                  itemBuilder: (context) =>
-                      _buildMenuItems(context, colorScheme),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // A quiet check beside the overflow menu confirms the song
+                    // is in Liked Songs, instead of a heart in the subtitle.
+                    ValueListenableBuilder<bool>(
+                      valueListenable: _songLikeStatus,
+                      builder: (context, isLiked, _) {
+                        if (!isLiked) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 2),
+                          child: Semantics(
+                            label: context.l10n!.liked,
+                            child: Icon(
+                              FluentIcons.checkmark_24_filled,
+                              size: 18,
+                              color: Daylight.cobalt,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    OverflowMenuButton<String>(
+                      iconSize: 19,
+                      color: Daylight.faint,
+                      onSelected: (value) => _handleSongMenuAction(
+                        context: context,
+                        value: value,
+                        song: widget.song,
+                        ytid: _ytid,
+                        songLikeStatus: _songLikeStatus,
+                        songOfflineStatus: _songOfflineStatus,
+                        songDownloadStatus: _songDownloadStatus,
+                        onRemove: widget.onRemove,
+                        onRename: () => _handleRenameSong(context),
+                      ),
+                      itemBuilder: (context) =>
+                          _buildMenuItems(context, colorScheme),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -680,7 +703,6 @@ class _SongInfo extends StatelessWidget {
     required this.artist,
     this.plays,
     required this.colorScheme,
-    required this.likeStatus,
     required this.offlineStatus,
   });
 
@@ -688,7 +710,6 @@ class _SongInfo extends StatelessWidget {
   final String artist;
   final String? plays;
   final ColorScheme colorScheme;
-  final ValueListenable<bool> likeStatus;
   final ValueListenable<bool> offlineStatus;
 
   @override
@@ -739,11 +760,7 @@ class _SongInfo extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(width: 6),
-            _SongStatusMarks(
-              likeStatus: likeStatus,
-              offlineStatus: offlineStatus,
-            ),
+            _SongStatusMarks(offlineStatus: offlineStatus),
           ],
         ),
       ],
@@ -751,45 +768,28 @@ class _SongInfo extends StatelessWidget {
   }
 }
 
-/// Liked and downloaded marks live in the card row, leaving the cover art
-/// unobstructed.
+/// Only the offline mark stays in the subtitle row. The liked state is now a
+/// check beside the overflow menu, which reads more clearly than a tiny heart.
 class _SongStatusMarks extends StatelessWidget {
-  const _SongStatusMarks({
-    required this.likeStatus,
-    required this.offlineStatus,
-  });
+  const _SongStatusMarks({required this.offlineStatus});
 
-  final ValueListenable<bool> likeStatus;
   final ValueListenable<bool> offlineStatus;
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: offlineStatus,
-      builder: (context, isOffline, _) => ValueListenableBuilder<bool>(
-        valueListenable: likeStatus,
-        builder: (context, isLiked, __) {
-          if (!isOffline && !isLiked) return const SizedBox.shrink();
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isLiked)
-                Icon(
-                  FluentIcons.heart_24_filled,
-                  size: 11,
-                  color: Daylight.cobalt,
-                ),
-              if (isLiked && isOffline) const SizedBox(width: 4),
-              if (isOffline)
-                Icon(
-                  FluentIcons.cloud_off_24_filled,
-                  size: 11,
-                  color: Daylight.muted,
-                ),
-            ],
-          );
-        },
-      ),
+      builder: (context, isOffline, _) {
+        if (!isOffline) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: Icon(
+            FluentIcons.cloud_off_24_filled,
+            size: 11,
+            color: Daylight.muted,
+          ),
+        );
+      },
     );
   }
 }
@@ -876,8 +876,9 @@ class _OnlineArtwork extends StatelessWidget {
                 fit: isImageSmall ? BoxFit.fill : BoxFit.cover,
                 width: size,
                 height: size,
-                centerSlice:
-                    isImageSmall ? const Rect.fromLTRB(1, 1, 1, 1) : null,
+                centerSlice: isImageSmall
+                    ? const Rect.fromLTRB(1, 1, 1, 1)
+                    : null,
               ),
             ),
             errorWidget: (context, url, error) =>
