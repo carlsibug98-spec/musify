@@ -47,9 +47,11 @@ class ArtistPreferencePicker extends StatefulWidget {
 }
 
 class _ArtistPreferencePickerState extends State<ArtistPreferencePicker> {
-  static const _genres = [
-    'Rock', 'Pop', 'Hip Hop', 'Jazz', 'Electronic', 'R&B',
-    'Indie', 'Metal', 'K-Pop', 'Reggae', 'Classical', 'Folk',
+  // Real artist names load reliably as verified artists; generic genre words
+  // mostly resolve to "topic" channels that the official-artist filter drops.
+  static const _seedArtists = [
+    'Zild', 'Taylor Swift', 'The Weeknd', 'Radiohead',
+    'Arctic Monkeys', 'Billie Eilish', 'BINI', 'Coldplay',
   ];
 
   final _selected = <PreferredArtist>{};
@@ -61,7 +63,13 @@ class _ArtistPreferencePickerState extends State<ArtistPreferencePicker> {
   @override
   void initState() {
     super.initState();
-    _selected.addAll(widget.initialSelection);
+    // Standalone routes pass no initial selection; read what the user saved
+    // earlier so the picker reflects their real taste on re-open.
+    _selected.addAll(
+      widget.initialSelection.isNotEmpty
+          ? widget.initialSelection
+          : preferredArtists.value,
+    );
     _loadSuggestions();
   }
 
@@ -74,13 +82,23 @@ class _ArtistPreferencePickerState extends State<ArtistPreferencePicker> {
   Future<void> _loadSuggestions() async {
     setState(() => _loading = true);
     final results = await Future.wait(
-      _genres.take(6).map((g) => searchArtists(g, limit: 2)),
+      _seedArtists.take(6).map((g) => searchArtists(g, limit: 2)),
     );
     final combined = <String, Map<String, dynamic>>{};
     for (final group in results) {
       for (final artist in group) {
-        final id = artist['id']?.toString() ?? '';
+        final id = (artist['ytid'] ?? artist['id'])?.toString() ?? '';
         if (id.isNotEmpty) combined.putIfAbsent(id, () => artist);
+      }
+    }
+    // Keep already-selected artists visible even if the seeded search changes.
+    for (final saved in _selected) {
+      if (saved.id.isNotEmpty) {
+        combined.putIfAbsent(saved.id, () => {
+          'ytid': saved.id,
+          'title': saved.name,
+          'image': saved.image,
+        });
       }
     }
     if (!mounted) return;
@@ -102,8 +120,8 @@ class _ArtistPreferencePickerState extends State<ArtistPreferencePicker> {
 
   void _toggle(Map<String, dynamic> artist) {
     final preferred = PreferredArtist(
-      id: artist['id']?.toString() ?? '',
-      name: artist['name']?.toString() ?? '',
+      id: (artist['ytid'] ?? artist['id'])?.toString() ?? '',
+      name: (artist['title'] ?? artist['name'])?.toString() ?? '',
       image: artist['image']?.toString(),
     );
     if (preferred.id.isEmpty && preferred.name.isEmpty) return;
@@ -118,7 +136,12 @@ class _ArtistPreferencePickerState extends State<ArtistPreferencePicker> {
 
   Future<void> _finish() async {
     await setPreferredArtists(_selected.toList());
-    widget.onDone?.call();
+    if (widget.onDone != null) {
+      widget.onDone!.call();
+    } else if (mounted && Navigator.of(context).canPop()) {
+      // Opened as a standalone route (e.g. from Settings): save then go back.
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -191,7 +214,7 @@ class _ArtistPreferencePickerState extends State<ArtistPreferencePicker> {
       itemBuilder: (context, index) => _ArtistCard(
         artist: list[index],
         selected: _selected.any(
-          (a) => a.id == list[index]['id']?.toString(),
+          (a) => a.id == (list[index]['ytid'] ?? list[index]['id'])?.toString(),
         ),
         onTap: () => _toggle(list[index]),
       ),
@@ -241,7 +264,7 @@ class _ArtistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = artist['name']?.toString() ?? '';
+    final name = (artist['title'] ?? artist['name'])?.toString() ?? '';
     final image = artist['image']?.toString();
     return GestureDetector(
       onTap: onTap,
