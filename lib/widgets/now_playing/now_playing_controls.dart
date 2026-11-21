@@ -73,8 +73,8 @@ class NowPlayingControls extends StatelessWidget {
         final spacing = isVeryCompact
             ? 2.0
             : isCompact
-            ? 4.0
-            : 8.0;
+            ? 6.0
+            : 10.0;
         final iconScale = isVeryCompact
             ? 0.65
             : isCompact
@@ -226,9 +226,6 @@ class PlayerControlButtons extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final responsiveIconSize = screenWidth < 360 ? iconSize * 0.85 : iconSize;
-    final responsiveMiniIconSize = screenWidth < 360
-        ? miniIconSize * 0.85
-        : miniIconSize;
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
@@ -268,20 +265,19 @@ class PlayerControlButtons extends StatelessWidget {
           minHeight: minButtonSize,
         );
 
-        final controlIconSize =
-            responsiveIconSize *
-            (isUltraTight
-                ? 0.75
-                : isTight
-                ? 0.85
-                : 0.92);
-        final miniControlSize =
-            responsiveMiniIconSize *
-            (isUltraTight
-                ? 0.8
-                : isTight
-                ? 0.9
-                : 1.0);
+        // Spotify's transport: shuffle/repeat 24 dp, skip 32 dp, play glyph
+        // 28 dp inside a 64 dp circle. Sizes stay constant while the 48 dp
+        // touch targets absorb the difference.
+        final controlIconSize = isUltraTight
+            ? 28.0
+            : isTight
+            ? 30.0
+            : 32.0;
+        final miniControlSize = isUltraTight
+            ? 20.0
+            : isTight
+            ? 22.0
+            : 24.0;
         final playPadding = EdgeInsets.all(
           responsiveIconSize *
               (isUltraTight
@@ -473,8 +469,8 @@ class _PlaybackControlsRow extends StatelessWidget {
                   ),
                   SizedBox(width: buttonSpacing),
                   Container(
-                    width: minButtonSize + 18,
-                    height: minButtonSize + 18,
+                    width: minButtonSize + 16,
+                    height: minButtonSize + 16,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       gradient: Daylight.cobaltGradient,
@@ -491,7 +487,7 @@ class _PlaybackControlsRow extends StatelessWidget {
                     child: PlaybackIconButton(
                       iconColor: Daylight.onAccent,
                       backgroundColor: Colors.transparent,
-                      iconSize: controlIconSize * 0.62,
+                      iconSize: controlIconSize * 0.875,
                     ),
                   ),
                   SizedBox(width: buttonSpacing),
@@ -552,7 +548,7 @@ class _PlaybackControlButton extends StatelessWidget {
       ),
       tooltip: tooltip,
       constraints: buttonConstraints,
-      iconSize: controlIconSize * 0.65,
+      iconSize: controlIconSize,
       onPressed: isEnabled ? onPressed : null,
       style: IconButton.styleFrom(
         backgroundColor: Colors.transparent,

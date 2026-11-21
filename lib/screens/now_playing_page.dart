@@ -68,9 +68,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
           stream: audioHandler.mediaItem,
           builder: (context, snapshot) {
             if (snapshot.data == null || !snapshot.hasData) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
             final metadata = snapshot.data!;
             return Column(
@@ -110,7 +108,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
         : '';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 2),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Row(
         children: [
           DaylightCircleButton(
@@ -127,20 +125,20 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
                   Text(
                     context.l10n!.nowPlaying,
                     style: Daylight.ui(
-                      9,
+                      10.5,
                       color: Daylight.muted,
                       weight: FontWeight.w600,
-                      letterSpacing: 0.3,
+                      letterSpacing: 0.2,
                     ),
                   ),
                   if (subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 1),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Daylight.display(
-                        13,
+                        15,
                         color: Daylight.ink,
                         weight: FontWeight.w700,
                       ),
@@ -153,8 +151,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
           OverflowMenuButton<String>(
             iconSize: 18,
             color: Daylight.ink,
-            onSelected: (value) =>
-                _handleMenuAction(context, metadata, value),
+            onSelected: (value) => _handleMenuAction(context, metadata, value),
             itemBuilder: (context) => [
               if (!(metadata.extras?['isLive'] ?? false))
                 buildPopupMenuItem<String>(
@@ -180,7 +177,11 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
     );
   }
 
-  void _handleMenuAction(BuildContext context, MediaItem metadata, String value) {
+  void _handleMenuAction(
+    BuildContext context,
+    MediaItem metadata,
+    String value,
+  ) {
     switch (value) {
       case 'download':
         unawaited(_toggleOffline(context, metadata));
@@ -314,7 +315,7 @@ class _MobileLayout extends StatelessWidget {
         children: [
           NowPlayingArtwork(size: size, metadata: metadata),
           if (!isLive) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             NowPlayingControls(
               size: size,
               audioId: metadata.extras?['ytid'],
@@ -322,20 +323,20 @@ class _MobileLayout extends StatelessWidget {
               adjustedMiniIconSize: adjustedMiniIconSize,
               metadata: metadata,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             BottomActionsRow(
               iconSize: adjustedMiniIconSize,
               metadata: metadata,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 14),
             LyricsPreviewCard(metadata: metadata),
-            const SizedBox(height: 2),
+            const SizedBox(height: 16),
           ] else
             BottomActionsRow(
               iconSize: adjustedMiniIconSize,
               metadata: metadata,
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
         ],
       ),
     );

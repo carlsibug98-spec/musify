@@ -44,6 +44,7 @@ import 'package:musify/widgets/overflow_menu_button.dart';
 import 'package:musify/widgets/playlist_page/download_button.dart';
 import 'package:musify/widgets/playlist_page/empty_playlist_state.dart';
 import 'package:musify/widgets/playlist_page/like_button.dart';
+import 'package:musify/widgets/playlist_page/playlist_action_buttons.dart';
 import 'package:musify/widgets/popup_menu_item.dart';
 import 'package:musify/widgets/song_bar.dart';
 import 'package:musify/widgets/spinner.dart';
@@ -140,14 +141,13 @@ class _ArtistPageState extends State<ArtistPage> {
     super.dispose();
   }
 
-  String get _resolvedArtistId =>
-      _cachedResolvedArtistId ??= _artist?['ytid']?.toString() ?? widget.artistId;
+  String get _resolvedArtistId => _cachedResolvedArtistId ??=
+      _artist?['ytid']?.toString() ?? widget.artistId;
 
-  String get _artistTitle =>
-      _cachedArtistTitle ??=
-          _artist?['title']?.toString() ??
-          widget.artistData?['title']?.toString() ??
-          '';
+  String get _artistTitle => _cachedArtistTitle ??=
+      _artist?['title']?.toString() ??
+      widget.artistData?['title']?.toString() ??
+      '';
 
   String? get _artistImage {
     final image =
@@ -334,7 +334,9 @@ class _ArtistPageState extends State<ArtistPage> {
       flexibleSpace: FlexibleSpaceBar(
         collapseMode: CollapseMode.parallax,
         background: ClipRRect(
-          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
+          borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(26),
+          ),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -371,20 +373,21 @@ class _ArtistPageState extends State<ArtistPage> {
                       _artistTitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Daylight.display(
-                        37,
-                        color: Colors.white,
-                        height: 1.02,
-                        letterSpacing: -1.3,
-                      ).copyWith(
-                        shadows: const [
-                          Shadow(
-                            color: Color(0x55000000),
-                            blurRadius: 18,
-                            offset: Offset(0, 3),
+                      style:
+                          Daylight.display(
+                            37,
+                            color: Colors.white,
+                            height: 1.02,
+                            letterSpacing: -1.3,
+                          ).copyWith(
+                            shadows: const [
+                              Shadow(
+                                color: Color(0x55000000),
+                                blurRadius: 18,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
                     ),
                     if (isVerified) ...[
                       const SizedBox(height: 8),
@@ -453,8 +456,9 @@ class _ArtistPageState extends State<ArtistPage> {
       width: 38,
       height: 38,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Daylight.card,
         shape: BoxShape.circle,
+        border: Daylight.hairline,
         boxShadow: Daylight.cardShadow,
       ),
       child: OverflowMenuButton<String>(
@@ -486,104 +490,32 @@ class _ArtistPageState extends State<ArtistPage> {
 
     return Text(
       '$listeners ${context.l10n!.monthlyListeners}',
-      style: Daylight.ui(
-        12.5,
-        color: Daylight.muted,
-        weight: FontWeight.w500,
-      ),
+      style: Daylight.ui(12.5, color: Daylight.muted, weight: FontWeight.w500),
     );
   }
 
   Widget _buildActions(BuildContext context) {
-    final l10n = context.l10n!;
-    final likeButton = PlaylistLikeButton(
-      playlistId: _resolvedArtistId,
-      playlistData: () => artistPlaylistData(_artist!, songs: const []),
-      asPill: true,
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // The pill is allowed to take the space left by the fixed circles and
-        // the portrait, so a narrow phone drops the label instead of the row.
-        const fixedWidth = 46 + 10 + 8 + 42 + 2 + 44 + 10 + 56;
-        final pillMaxWidth = (constraints.maxWidth - fixedWidth)
-            .clamp(64.0, 220.0)
-            .toDouble();
-
-        return Row(
-          children: [
-            _ArtistAvatar(image: _artistImage),
-            const SizedBox(width: 10),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: pillMaxWidth),
-              child: likeButton,
-            ),
-            const Spacer(),
-            PlaylistDownloadButton(
-              playlistId: _resolvedArtistId,
-              resolvePlaylist: _loadCatalog,
-              songs: _catalog?['list'] as List?,
-              requireSnapshotMatch: true,
-            ),
-            const SizedBox(width: 2),
-            DaylightCircleButton(
-              icon: FluentIcons.arrow_shuffle_24_filled,
-              iconSize: 19,
-              size: 44,
-              color: Daylight.cobalt,
-              tooltip: l10n.shuffle,
-              onTap: () => unawaited(_playArtist(shuffle: true)),
-            ),
-            const SizedBox(width: 10),
-            _buildPlayButton(context),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPlayButton(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: context.l10n!.play,
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: Daylight.cobaltShadow,
-        ),
-        child: Material(
-          color: Daylight.cobalt,
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: _isLoadingCatalog.value
-                ? null
-                : () => unawaited(_playArtist()),
-            child: Center(
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _isLoadingCatalog,
-                builder: (_, isLoading, __) => isLoading
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Daylight.onAccent,
-                        ),
-                      )
-                    : Icon(
-                        FluentIcons.play_24_filled,
-                        size: 25,
-                        color: Daylight.onAccent,
-                      ),
-              ),
-            ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isLoadingCatalog,
+      builder: (context, isLoading, __) => PlaylistActionButtons(
+        albumStyle: true,
+        isLoading: isLoading,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        coverThumb: _ArtistAvatar(image: _artistImage),
+        actions: [
+          PlaylistLikeButton(
+            playlistId: _resolvedArtistId,
+            playlistData: () => artistPlaylistData(_artist!, songs: const []),
           ),
-        ),
+          PlaylistDownloadButton(
+            playlistId: _resolvedArtistId,
+            resolvePlaylist: _loadCatalog,
+            songs: _catalog?['list'] as List?,
+            requireSnapshotMatch: true,
+          ),
+        ],
+        onPlay: () => unawaited(_playArtist()),
+        onShuffle: () => _playArtist(shuffle: true),
       ),
     );
   }
@@ -808,12 +740,13 @@ class _ArtistAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 46,
-      height: 46,
+      width: 44,
+      height: 44,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Daylight.card,
         borderRadius: BorderRadius.circular(12),
+        border: Daylight.hairline,
         boxShadow: Daylight.cardShadow,
       ),
       child: ClipRRect(
@@ -941,10 +874,7 @@ class _SectionHeading extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: Daylight.display(21, letterSpacing: -0.5),
-          ),
+          child: Text(title, style: Daylight.display(21, letterSpacing: -0.5)),
         ),
         if (action != null) action!,
       ],
@@ -985,7 +915,7 @@ class _OutlinePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Daylight.card,
       shape: StadiumBorder(side: BorderSide(color: Daylight.lineStrong)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

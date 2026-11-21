@@ -294,6 +294,7 @@ class _LyricsPreviewCardState extends State<LyricsPreviewCard> {
     final isActive = index == active;
     final isPast = active >= 0 && index < active;
     final time = line.time;
+    final text = line.isInstrumental ? instrumentalGlyphs : line.text;
 
     return Padding(
       key: _lineKeys.putIfAbsent(index, () => GlobalKey()),
@@ -307,20 +308,25 @@ class _LyricsPreviewCardState extends State<LyricsPreviewCard> {
                 if (target.isNegative) target = Duration.zero;
                 audioHandler.seek(target);
               },
-        child: AnimatedDefaultTextStyle(
-          duration: MediaQuery.disableAnimationsOf(context)
-              ? Duration.zero
-              : const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          style: Daylight.display(
-            isActive ? 16.5 : 15,
-            color: isActive
-                ? Daylight.cobalt
-                : Daylight.ink.withValues(alpha: isPast ? 0.3 : 0.52),
-            weight: isActive ? FontWeight.w700 : FontWeight.w500,
-            height: 1.3,
+        child: Semantics(
+          label: line.isInstrumental ? context.l10n!.instrumental : null,
+          excludeSemantics: line.isInstrumental,
+          child: AnimatedDefaultTextStyle(
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            style: Daylight.display(
+              isActive ? 16.5 : 15,
+              color: isActive
+                  ? Daylight.cobalt
+                  : Daylight.ink.withValues(alpha: isPast ? 0.3 : 0.52),
+              weight: isActive ? FontWeight.w700 : FontWeight.w500,
+              height: 1.3,
+              letterSpacing: line.isInstrumental ? 2 : null,
+            ),
+            child: Text(text, textAlign: TextAlign.left),
           ),
-          child: Text(line.text),
         ),
       ),
     );

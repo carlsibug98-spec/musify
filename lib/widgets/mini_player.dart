@@ -26,6 +26,7 @@ import 'package:musify/main.dart';
 import 'package:musify/models/full_player_state.dart';
 import 'package:musify/models/position_data.dart';
 import 'package:musify/screens/now_playing_page.dart';
+import 'package:musify/services/artwork_palette.dart';
 import 'package:musify/theme/daylight.dart';
 import 'package:musify/widgets/marquee.dart';
 import 'package:musify/widgets/song_artwork.dart';
@@ -49,10 +50,13 @@ final Stream<FullPlayerState> _fullPlayerStateStream =
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
-  static const double playerHeight = 66;
-  static const double _borderRadius = 14;
-  static const double _artworkSize = 42;
-  static const double _artworkRadius = 21;
+  // Spotify's floating now-playing bar: 56 dp tall, 8 dp radius, 8 dp inset,
+  // 40 dp cover with a 4 dp radius. Matching those measurements keeps the bar
+  // from dominating the home feed while the artwork stays legible.
+  static const double playerHeight = 56;
+  static const double _borderRadius = 8;
+  static const double _artworkSize = 40;
+  static const double _artworkRadius = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -185,80 +189,90 @@ class _MiniPlayerBodyState extends State<_MiniPlayerBody>
             onTapCancel: () => _animationController.reverse(),
             onVerticalDragUpdate: _handleVerticalDrag,
             onTap: _navigateToNowPlaying,
-            child: Container(
-              height: MiniPlayer.playerHeight,
-              decoration: BoxDecoration(
-                color: Daylight.card,
-                borderRadius: BorderRadius.circular(MiniPlayer._borderRadius),
-                border: Daylight.hairline,
-                boxShadow: Daylight.floatingShadow,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(MiniPlayer._borderRadius),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 2.5,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ColoredBox(color: Daylight.line),
-                          FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: progress.clamp(0.0, 1.0),
-                            child: ColoredBox(color: Daylight.cobalt),
-                          ),
-                        ],
-                      ),
+            child: FutureBuilder<Color?>(
+              future: songArtworkTint(metadata),
+              builder: (context, tintSnapshot) {
+                return Container(
+                  height: MiniPlayer.playerHeight,
+                  decoration: BoxDecoration(
+                    color: artworkTintedSurface(tintSnapshot.data),
+                    borderRadius: BorderRadius.circular(
+                      MiniPlayer._borderRadius,
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(9, 5, 7, 5),
-                        child: Row(
-                          children: [
-                            _ArtworkWidget(metadata: metadata),
-                            Expanded(
-                              child: AnimatedSwitcher(
-                                duration: Daylight.motion(
-                                  context,
-                                  const Duration(milliseconds: 300),
-                                ),
-                                switchInCurve: Curves.easeIn,
-                                switchOutCurve: Curves.easeOut,
-                                layoutBuilder:
-                                    (currentChild, previousChildren) => Stack(
-                                      alignment: Alignment.centerLeft,
-                                      children: [
-                                        ...previousChildren,
-                                        if (currentChild != null) currentChild,
-                                      ],
+                    boxShadow: Daylight.floatingShadow,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      MiniPlayer._borderRadius,
+                    ),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 2,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ColoredBox(color: Daylight.line),
+                              FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: progress.clamp(0.0, 1.0),
+                                child: ColoredBox(color: Daylight.cobalt),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 6, 4, 6),
+                            child: Row(
+                              children: [
+                                _ArtworkWidget(metadata: metadata),
+                                Expanded(
+                                  child: AnimatedSwitcher(
+                                    duration: Daylight.motion(
+                                      context,
+                                      const Duration(milliseconds: 300),
                                     ),
-                                transitionBuilder: (child, animation) =>
-                                    FadeTransition(
-                                      opacity: animation,
-                                      child: child,
+                                    switchInCurve: Curves.easeIn,
+                                    switchOutCurve: Curves.easeOut,
+                                    layoutBuilder:
+                                        (currentChild, previousChildren) =>
+                                            Stack(
+                                              alignment: Alignment.centerLeft,
+                                              children: [
+                                                ...previousChildren,
+                                                if (currentChild != null)
+                                                  currentChild,
+                                              ],
+                                            ),
+                                    transitionBuilder: (child, animation) =>
+                                        FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        ),
+                                    child: KeyedSubtree(
+                                      key: ValueKey(metadata.id),
+                                      child: _MetadataWidget(
+                                        title: metadata.title,
+                                        artist: metadata.artist,
+                                        colorScheme: colorScheme,
+                                      ),
                                     ),
-                                child: KeyedSubtree(
-                                  key: ValueKey(metadata.id),
-                                  child: _MetadataWidget(
-                                    title: metadata.title,
-                                    artist: metadata.artist,
-                                    colorScheme: colorScheme,
                                   ),
                                 ),
-                              ),
+                                _ControlsWidget(
+                                  playbackState: state.playbackState,
+                                  hasNext: widget.hasNext,
+                                ),
+                              ],
                             ),
-                            _ControlsWidget(
-                              playbackState: state.playbackState,
-                              hasNext: widget.hasNext,
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           ),
         );
@@ -274,15 +288,15 @@ class _ArtworkWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.only(right: 8),
       child: Hero(
         tag: 'now_playing_artwork',
         child: DecoratedBox(
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(MiniPlayer._artworkRadius),
             boxShadow: [
               BoxShadow(
-                color: Daylight.ink.withValues(alpha: 0.16),
+                color: Daylight.ink.withValues(alpha: 0.14),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
                 spreadRadius: -3,
@@ -328,7 +342,7 @@ class _MetadataWidget extends StatelessWidget {
             child: Text(
               title,
               style: Daylight.ui(
-                12.5,
+                13.5,
                 color: Daylight.ink,
                 weight: FontWeight.w600,
                 height: 1.2,
@@ -341,7 +355,7 @@ class _MetadataWidget extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               artist!,
-              style: Daylight.ui(10, color: Daylight.muted, height: 1.2),
+              style: Daylight.ui(11.5, color: Daylight.muted, height: 1.2),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -372,12 +386,11 @@ class _ControlsWidget extends StatelessWidget {
             highlightColor: Colors.transparent,
             icon: Icon(
               FluentIcons.next_24_filled,
-              color: Daylight.muted,
-              size: 21,
+              color: Daylight.ink,
+              size: 24,
             ),
-            visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           ),
         ],
       ],
@@ -399,50 +412,35 @@ class _MiniPlayButton extends StatelessWidget {
         processingState == AudioProcessingState.buffering;
     final isCompleted = processingState == AudioProcessingState.completed;
 
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: Daylight.cobalt,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x662743E8),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-            spreadRadius: -5,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: isCompleted
-              ? () => audioHandler.playAgain()
-              : (isPlaying ? audioHandler.pause : audioHandler.play),
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Icon(
-                    isCompleted
-                        ? FluentIcons.arrow_counterclockwise_24_filled
-                        : (isPlaying
-                              ? FluentIcons.pause_16_filled
-                              : FluentIcons.play_16_filled),
-                    color: Colors.white,
-                    size: 16,
-                  ),
-          ),
-        ),
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        onPressed: isCompleted
+            ? () => audioHandler.playAgain()
+            : (isPlaying ? audioHandler.pause : audioHandler.play),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        icon: isLoading
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Daylight.ink,
+                ),
+              )
+            : Icon(
+                isCompleted
+                    ? FluentIcons.arrow_counterclockwise_24_filled
+                    : (isPlaying
+                          ? FluentIcons.pause_24_filled
+                          : FluentIcons.play_24_filled),
+                color: Daylight.ink,
+                size: 26,
+              ),
       ),
     );
   }

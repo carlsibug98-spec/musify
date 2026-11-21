@@ -313,6 +313,7 @@
   "topResult": "Top result",
   "playingFromPlaylist": "Playing from Playlist",
   "showLyrics": "Show lyrics",
+  "instrumental": "Instrumental",
   "lyricsPreview": "Lyrics preview",
   "translateDescription": "Help translate Musify into your language on Crowdin.",
   "understand": "I understand",
@@ -380,5 +381,18 @@
   "syncEarlier": "Earlier",
   "syncLater": "Later",
   "reset": "Reset",
-  "syncHint": "Shift the lyrics until they match the audio."
+  "syncHint": "Shift the lyrics until they match the audio.",
+  "becauseYouLike": "Because you like {artist}",
+  "@becauseYouLike": {
+    "description": "Home shelf seeded by the strongest artist in the taste profile",
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "notInterested": "Not interested",
+  "hideThisSection": "Hide this section",
+  "notInterestedMarked": "We'll show fewer songs like this",
+  "sectionHidden": "Section hidden"
 }

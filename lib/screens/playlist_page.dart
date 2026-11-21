@@ -51,7 +51,7 @@ import 'package:musify/widgets/playlist_page/download_button.dart';
 import 'package:musify/widgets/playlist_page/empty_playlist_state.dart';
 import 'package:musify/widgets/playlist_page/like_button.dart';
 import 'package:musify/widgets/playlist_page/playlist_action_buttons.dart'
-    show PlaylistActionButtons, PlaylistIconAction;
+    show PlaylistActionButtons, PlaylistCircleAction;
 import 'package:musify/widgets/playlist_page/playlist_header.dart';
 import 'package:musify/widgets/playlist_page/playlist_sliver_app_bar.dart';
 import 'package:musify/widgets/playlist_page/search_bar_section.dart';
@@ -445,24 +445,21 @@ class _PlaylistPageState extends State<PlaylistPage> {
   Widget _buildAlbumHeaderSection(int songsLength) {
     final l10n = context.l10n!;
     final cover = _playlist['image']?.toString();
+    final albumId = _playlist['ytid']?.toString() ?? widget.playlistId;
 
-    final actions = <PlaylistIconAction>[];
-    if (songsLength > 0) {
-      actions.add(
-        PlaylistIconAction(
-          icon: FluentIcons.arrow_download_24_regular,
-          tooltip: l10n.download,
-          onTap: () => _downloadAlbum(),
+    final actions = <Widget>[
+      if (songsLength > 0 && albumId != null && albumId.isNotEmpty)
+        PlaylistDownloadButton(
+          playlistId: albumId,
+          resolvePlaylist: () async => _playlist,
         ),
-      );
-      actions.add(
-        PlaylistIconAction(
+      if (songsLength > 0)
+        PlaylistCircleAction(
           icon: FluentIcons.share_24_regular,
           tooltip: l10n.share,
-          onTap: () => _sharePlaylist(),
+          onPressed: _sharePlaylist,
         ),
-      );
-    }
+    ];
 
     return Column(
       children: [
@@ -523,18 +520,6 @@ class _PlaylistPageState extends State<PlaylistPage> {
         const SizedBox(height: 12),
       ],
     );
-  }
-
-  Future<void> _downloadAlbum() async {
-    final playlistId = _playlist?['ytid']?.toString() ?? widget.playlistId;
-    if (playlistId == null || playlistId.isEmpty) return;
-    // The dedicated button owns the download progress + offline toggle flow.
-    // Here a toast confirms the tap; full offline state is still driven by the
-    // same service the button uses.
-    final songs = (_playlist?['list'] as List? ?? const []).length;
-    if (mounted) {
-      showToast(context, context.l10n!.tracksCount(songs));
-    }
   }
 
   void _sharePlaylist() async {

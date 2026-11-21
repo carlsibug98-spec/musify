@@ -34,6 +34,7 @@ import 'package:musify/services/common_services.dart';
 import 'package:musify/services/data_manager.dart';
 import 'package:musify/services/listening_stats_service.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/services/taste_profile_service.dart';
 import 'package:musify/utilities/map_utils.dart';
 import 'package:musify/utilities/media_duration.dart';
 import 'package:musify/utilities/mediaitem.dart';
@@ -498,6 +499,25 @@ class MusifyAudioHandler extends BaseAudioHandler implements AndroidAutoHost {
     listeningStatsService.finishListeningSession(
       countCurrentTick: countCurrentTick,
       flushStats: flushStats,
+    );
+  }
+
+  /// Records a skip only when the user leaves a track before it qualified for a
+  /// play. Completion clears the session before advancing and playback errors
+  /// set [_lastError], so neither is counted as a skip.
+  void _recordTasteSkipIfNeeded({Map? nextSong}) {
+    if (_lastError != null) return;
+    final current = listeningStatsService.currentSessionSong;
+    if (current == null) return;
+
+    final currentId = current['ytid']?.toString();
+    final nextId = nextSong?['ytid']?.toString();
+    if (currentId != null && currentId.isNotEmpty && currentId == nextId) {
+      return;
+    }
+    tasteProfileService.recordSkipIfUnqualified(
+      current,
+      qualified: listeningStatsService.currentSessionQualified,
     );
   }
 
@@ -1095,6 +1115,11 @@ class MusifyAudioHandler extends BaseAudioHandler implements AndroidAutoHost {
       final manuallyAddedSongs = replace ? _getUnplayedManualSongs() : <Map>[];
       final shuffleAfterReplace = shuffle ?? shuffleNotifier.value;
       if (replace) {
+        final startSong =
+            startIndex != null && startIndex >= 0 && startIndex < songs.length
+            ? songs[startIndex]
+            : (songs.isEmpty ? null : songs.first);
+        _recordTasteSkipIfNeeded(nextSong: startSong);
         _queueList.clear();
         _originalQueueList.clear();
         _originalQueueEntriesById.clear();
@@ -2389,6 +2414,7 @@ class MusifyAudioHandler extends BaseAudioHandler implements AndroidAutoHost {
         logger.log('Invalid song index: $newIndex');
         return;
       }
+      _recordTasteSkipIfNeeded(nextSong: _queueList[newIndex]);
       await _playFromQueue(newIndex);
     } catch (e, stackTrace) {
       logger.log('Error skipping to song', error: e, stackTrace: stackTrace);
@@ -2401,6 +2427,7 @@ class MusifyAudioHandler extends BaseAudioHandler implements AndroidAutoHost {
   @override
   Future<void> skipToNext({bool playWhenReady = true}) async {
     try {
+      _recordTasteSkipIfNeeded();
       if (_currentQueueIndex < _queueList.length - 1) {
         await _playFromQueue(
           _currentQueueIndex + 1,
@@ -2432,6 +2459,7 @@ class MusifyAudioHandler extends BaseAudioHandler implements AndroidAutoHost {
   @override
   Future<void> skipToPrevious({bool playWhenReady = true}) async {
     try {
+      _recordTasteSkipIfNeeded();
       if (_currentQueueIndex > 0) {
         await _playFromQueue(
           _currentQueueIndex - 1,

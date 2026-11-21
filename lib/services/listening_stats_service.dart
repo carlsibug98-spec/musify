@@ -64,6 +64,12 @@ class ListeningStatsService {
             hasDisplayableAnnualListeningStats(stats, now));
   }
 
+  /// Current session, exposed read-only so the taste profile can tell whether a
+  /// track change happened before playback qualified.
+  Map? get currentSessionSong => _sessionSong;
+
+  bool get currentSessionQualified => _sessionQualified;
+
   bool get isAnnualRecapAvailable {
     final now = DateTime.now();
     if (!isListeningStatsAnnualWindow(now)) return false;

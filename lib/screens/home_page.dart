@@ -27,20 +27,24 @@ import 'package:material_ui/material_ui.dart';
 import 'package:musify/constants/app_constants.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
+import 'package:musify/screens/search_page.dart' show genreSearchRequest;
+import 'package:musify/services/artist_service.dart';
 import 'package:musify/services/common_services.dart';
 import 'package:musify/services/listening_stats_service.dart';
 import 'package:musify/services/playlists_manager.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/services/taste_profile_service.dart';
 import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/app_utils.dart';
 import 'package:musify/utilities/artwork_provider.dart';
 import 'package:musify/utilities/async_loader.dart';
+import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/listening_stats_utils.dart';
-import 'package:musify/screens/search_page.dart' show genreSearchRequest;
 import 'package:musify/widgets/announcement_box.dart';
 import 'package:musify/widgets/daylight/browse_tile.dart';
 import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/daylight/genre_grid.dart';
+import 'package:musify/widgets/daylight/taste_shelf.dart';
 import 'package:musify/widgets/mini_player_bottom_space.dart';
 import 'package:musify/widgets/recommended_songs_section.dart';
 
@@ -58,6 +62,7 @@ enum _HomeFilter { all, playlists, songs }
 class _HomePageState extends State<HomePage> {
   late final Future<List> _suggestedPlaylistsFuture;
   late Future<List> _recommendedSongsFuture;
+  late Future<_TasteShelfData?> _tasteShelfFuture;
   _HomeFilter _filter = _HomeFilter.all;
 
   @override
@@ -67,12 +72,15 @@ class _HomePageState extends State<HomePage> {
       playlistsNum: recommendedCubesNumber,
     );
     _recommendedSongsFuture = getRecommendedSongs();
+    _tasteShelfFuture = _loadTasteShelf();
     externalRecommendations.addListener(_refreshRecommendedSongs);
+    tasteProfileRevision.addListener(_refreshTasteShelf);
   }
 
   @override
   void dispose() {
     externalRecommendations.removeListener(_refreshRecommendedSongs);
+    tasteProfileRevision.removeListener(_refreshTasteShelf);
     super.dispose();
   }
 
@@ -81,6 +89,90 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _recommendedSongsFuture = getRecommendedSongs();
     });
+  }
+
+  void _refreshTasteShelf() {
+    if (!mounted) return;
+    setState(() {
+      _tasteShelfFuture = _loadTasteShelf();
+    });
+  }
+
+  /// Builds the local "Because you like …" shelf. Spotify's server resolves
+  /// this section from the taste profile; Musify derives the same seed on
+  /// device, then uses the real artist catalog so every card is playable.
+  Future<_TasteShelfData?> _loadTasteShelf() async {
+    final seed = tasteProfileService.topSeedArtist();
+    if (seed == null) return null;
+
+    final sectionId = _tasteSectionId(seed.name);
+    if (tasteProfileService.isSectionDismissed(sectionId)) return null;
+
+    try {
+      Map<String, dynamic>? catalog;
+      if (seed.id.isNotEmpty) {
+        catalog = await getArtistCatalog(
+          seed.id,
+          preferredName: seed.name,
+          preferredImage: seed.image,
+        );
+      } else {
+        final artist = await resolveArtist(seed.name, preferredName: seed.name);
+        if (artist != null) {
+          catalog = await getArtistCatalogFromProfile(artist);
+        }
+      }
+
+      final songs = (catalog?['list'] as List? ?? const [])
+          .whereType<Map>()
+          .toList();
+      if (songs.isEmpty) return null;
+
+      // Liked tracks stay eligible here: "Because you like" is a taste
+      // reminder before it is a discovery feed.
+      final ranked = tasteProfileService.rankSongs(
+        songs,
+        limit: 8,
+        excludeLiked: false,
+      );
+      if (ranked.isEmpty) return null;
+
+      return _TasteShelfData(
+        sectionId: sectionId,
+        artist: seed.name,
+        songs: ranked,
+      );
+    } catch (e, stackTrace) {
+      logger.log(
+        'Could not build the taste shelf for ${seed.name}',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  String _tasteSectionId(String artist) =>
+      'because-you-like:${artist.trim().toLowerCase()}';
+
+  void _markNotInterested(BuildContext context, Map song) {
+    final entry = tasteProfileService.markNotInterested(song);
+    showToastWithButton(
+      context,
+      context.l10n!.notInterestedMarked,
+      context.l10n!.undo,
+      () => tasteProfileService.undoNotInterested(entry),
+    );
+  }
+
+  void _dismissTasteShelf(BuildContext context, _TasteShelfData data) {
+    tasteProfileService.dismissSection(data.sectionId);
+    showToastWithButton(
+      context,
+      context.l10n!.sectionHidden,
+      context.l10n!.undo,
+      () => tasteProfileService.undoSectionDismissal(data.sectionId),
+    );
   }
 
   int _monthMinutes() {
@@ -134,9 +226,9 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
                 _buildQuickAccess(context),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 _buildFilterChips(context),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 if (_filter != _HomeFilter.songs)
                   GenreGrid(
                     title: context.l10n!.genres,
@@ -146,14 +238,15 @@ class _HomePageState extends State<HomePage> {
                       context.go('/search');
                     },
                   ),
-                if (_filter != _HomeFilter.songs) const SizedBox(height: 14),
+                if (_filter != _HomeFilter.songs) const SizedBox(height: 16),
                 if (_filter != _HomeFilter.playlists) _buildJumpBackIn(),
                 if (_filter != _HomeFilter.playlists)
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                 if (_filter != _HomeFilter.songs) _buildSuggestedPlaylists(),
-                if (_filter != _HomeFilter.songs) const SizedBox(height: 12),
+                if (_filter != _HomeFilter.songs) const SizedBox(height: 16),
                 if (_filter != _HomeFilter.songs) _buildLikedPlaylists(),
                 if (_filter != _HomeFilter.playlists) _buildMonthRecap(),
+                if (_filter != _HomeFilter.playlists) _buildTasteShelf(),
                 if (_filter != _HomeFilter.playlists)
                   _buildRecommendedSongsSection(),
                 const MiniPlayerBottomSpace(),
@@ -240,7 +333,7 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DaylightSectionHeader(title: context.l10n!.yourLibrary),
-            const SizedBox(height: 6),
+            const SizedBox(height: 10),
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -294,7 +387,7 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DaylightSectionHeader(title: context.l10n!.jumpBackIn),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             SizedBox(
               height: 160,
               child: ListView.separated(
@@ -503,6 +596,34 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTasteShelf() {
+    return AsyncLoader<_TasteShelfData?>(
+      future: _tasteShelfFuture,
+      loadingWidget: const SizedBox.shrink(),
+      builder: (context, data) {
+        if (data == null) return const SizedBox.shrink();
+        final title = context.l10n!.becauseYouLike(data.artist);
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: TasteShelf(
+            title: title,
+            songs: data.songs,
+            onPlay: (index) {
+              audioHandler.playPlaylistSong(
+                playlist: {'title': title, 'list': data.songs},
+                songIndex: index,
+                shuffle: false,
+              );
+            },
+            onNotInterested: (song) => _markNotInterested(context, song),
+            onDismiss: () => _dismissTasteShelf(context, data),
           ),
         );
       },
@@ -830,4 +951,16 @@ class _PlaylistShelf extends StatelessWidget {
       ],
     );
   }
+}
+
+class _TasteShelfData {
+  const _TasteShelfData({
+    required this.sectionId,
+    required this.artist,
+    required this.songs,
+  });
+
+  final String sectionId;
+  final String artist;
+  final List<Map> songs;
 }

@@ -97,76 +97,113 @@ class _PlaylistDownloadButtonState extends State<PlaylistDownloadButton> {
       valueListenable: userOfflineSongs,
       builder: (context, _, __) => ValueListenableBuilder<List>(
         valueListenable: offlinePlaylistService.offlinePlaylists,
-        builder: (context, __, ___) {
-          if (_isOffline) {
-            return IconButton(
-              icon: const Icon(
-                FluentIcons.arrow_download_off_24_filled,
-                size: 18,
-              ),
-              style: IconButton.styleFrom(
-                fixedSize: const Size(48, 48),
-                backgroundColor: Daylight.cobalt,
-                foregroundColor: Daylight.onAccent,
-                shape: const CircleBorder(),
-              ),
-              onPressed: () =>
-                  showRemoveOfflinePlaylistDialog(context, playlistId),
-              tooltip: context.l10n!.removeOffline,
-            );
-          }
-
-          return ValueListenableBuilder<DownloadProgress>(
-            valueListenable: offlinePlaylistService.getProgressNotifier(
+        builder: (context, __, ___) => ValueListenableBuilder<DownloadProgress>(
+          valueListenable: offlinePlaylistService.getProgressNotifier(
+            playlistId,
+          ),
+          builder: (context, progress, _) {
+            final Widget child;
+            if (_isOffline) {
+              child = _buildStatusCircle(context, offline: true);
+            } else if (offlinePlaylistService.isPlaylistDownloading(
               playlistId,
+            )) {
+              child = _buildProgress(context, progress);
+            } else if (offlineMode.value) {
+              child = const SizedBox.shrink(key: ValueKey('download-hidden'));
+            } else if (_isResolving) {
+              child = _buildResolving();
+            } else {
+              child = _buildStatusCircle(context, offline: false);
+            }
+
+            // The icon pops into the filled offline state when the last track
+            // lands, so completion is visible without another toast.
+            return AnimatedSwitcher(
+              duration: Daylight.motion(
+                context,
+                const Duration(milliseconds: 260),
+              ),
+              switchInCurve: Curves.easeOutBack,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.78, end: 1).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: child,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusCircle(BuildContext context, {required bool offline}) {
+    final tooltip = offline
+        ? context.l10n!.removeOffline
+        : context.l10n!.downloadPlaylist;
+
+    return Tooltip(
+      key: ValueKey(offline ? 'download-offline' : 'download-idle'),
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        selected: offline,
+        label: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: Ink(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: offline ? Daylight.cobalt : Daylight.card,
+              shape: BoxShape.circle,
+              border: offline ? null : Border.all(color: Daylight.lineStrong),
             ),
-            builder: (context, progress, _) {
-              if (offlinePlaylistService.isPlaylistDownloading(playlistId)) {
-                return _buildProgress(context, progress);
-              }
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: offline
+                  ? () => showRemoveOfflinePlaylistDialog(context, playlistId)
+                  : () => _download(context),
+              child: Icon(
+                offline
+                    ? FluentIcons.arrow_download_off_24_filled
+                    : FluentIcons.arrow_download_24_filled,
+                size: 18,
+                color: offline ? Daylight.onAccent : Daylight.cobalt,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-              if (offlineMode.value) return const SizedBox.shrink();
-
-              if (_isResolving) {
-                return const SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 3),
-                    ),
-                  ),
-                );
-              }
-
-              return IconButton(
-                icon: const Icon(
-                  FluentIcons.arrow_download_24_filled,
-                  size: 18,
-                ),
-                style: IconButton.styleFrom(
-                  fixedSize: const Size(48, 48),
-                  backgroundColor: Daylight.card,
-                  foregroundColor: Daylight.cobalt,
-                  shape: const CircleBorder(),
-                  side: BorderSide(color: Daylight.lineStrong),
-                ),
-                onPressed: () => _download(context),
-                tooltip: context.l10n!.downloadPlaylist,
-              );
-            },
-          );
-        },
+  Widget _buildResolving() {
+    return const SizedBox(
+      key: ValueKey('download-resolving'),
+      width: 48,
+      height: 48,
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2.5),
+        ),
       ),
     );
   }
 
   Widget _buildProgress(BuildContext context, DownloadProgress progress) {
     return SizedBox(
-      width: 46,
-      height: 46,
+      key: const ValueKey('download-progress'),
+      width: 48,
+      height: 48,
       child: Stack(
         alignment: Alignment.center,
         children: [

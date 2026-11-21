@@ -25,24 +25,40 @@ import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/theme/daylight.dart';
 
-class PlaylistIconAction {
-  const PlaylistIconAction({
+/// A 48 dp circular secondary action (share, edit, sync) used beside the
+/// download and like circles on album and artist rows.
+class PlaylistCircleAction extends StatelessWidget {
+  const PlaylistCircleAction({
+    super.key,
     required this.icon,
     required this.tooltip,
-    required this.onTap,
-    this.active = false,
+    required this.onPressed,
   });
 
   final IconData icon;
   final String tooltip;
-  final VoidCallback onTap;
-  final bool active;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(icon, size: 18, color: Daylight.cobalt),
+      style: IconButton.styleFrom(
+        fixedSize: const Size(48, 48),
+        backgroundColor: Daylight.card,
+        shape: const CircleBorder(),
+        side: BorderSide(color: Daylight.lineStrong),
+      ),
+      onPressed: onPressed,
+      tooltip: tooltip,
+    );
+  }
 }
 
 /// Play and shuffle whatever the page is about, shared by the playlist and the
 /// artist pages. In [albumStyle] mode it becomes a Spotify-like single row: a
-/// small cover thumb, compact icon actions, and a large filled play button on
-/// the right.
+/// small cover thumb, compact circular actions, and a large filled play button
+/// on the right.
 class PlaylistActionButtons extends StatelessWidget {
   const PlaylistActionButtons({
     super.key,
@@ -52,20 +68,25 @@ class PlaylistActionButtons extends StatelessWidget {
     this.albumStyle = false,
     this.coverThumb,
     this.actions = const [],
+    this.padding = const EdgeInsets.fromLTRB(20, 8, 20, 8),
   });
 
   final VoidCallback onPlay;
   final AsyncCallback onShuffle;
   final bool isLoading;
 
-  /// Spotify-style single action row for albums.
+  /// Spotify-style single action row for albums and artists.
   final bool albumStyle;
 
   /// Optional small cover thumbnail shown at the far left of the album row.
   final Widget? coverThumb;
 
-  /// Extra compact icon actions (add, download, share, ...) for albums.
-  final List<PlaylistIconAction> actions;
+  /// Extra circular actions (like, download, share, ...) for album rows.
+  final List<Widget> actions;
+
+  /// Outer padding of the album row. Pages that already pad their content pass
+  /// [EdgeInsets.zero] horizontally so the row lines up with their headers.
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -127,14 +148,11 @@ class PlaylistActionButtons extends StatelessWidget {
 
   Widget _buildAlbumRow(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      padding: padding,
       child: Row(
         children: [
-          if (coverThumb != null) ...[coverThumb!, const SizedBox(width: 12)],
-          for (final action in actions) ...[
-            _iconAction(action),
-            const SizedBox(width: 2),
-          ],
+          if (coverThumb != null) ...[coverThumb!, const SizedBox(width: 14)],
+          for (final action in actions) ...[action, const SizedBox(width: 2)],
           const Spacer(),
           _circleAction(
             icon: FluentIcons.arrow_shuffle_24_filled,
@@ -145,22 +163,6 @@ class PlaylistActionButtons extends StatelessWidget {
           const SizedBox(width: 12),
           _playButton(context),
         ],
-      ),
-    );
-  }
-
-  Widget _iconAction(PlaylistIconAction action) {
-    return Tooltip(
-      message: action.tooltip,
-      child: IconButton(
-        icon: Icon(
-          action.icon,
-          size: 22,
-          color: action.active ? Daylight.cobalt : Daylight.muted,
-        ),
-        onPressed: action.onTap,
-        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        padding: const EdgeInsets.all(6),
       ),
     );
   }

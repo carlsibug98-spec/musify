@@ -297,7 +297,8 @@ class LyricsManager {
     return decoded is List ? decoded : const [];
   }
 
-  static const _lrclibUserAgent = 'Musify/10.6.0 (https://github.com/gokadzev/Musify)';
+  static const _lrclibUserAgent =
+      'Musify/10.6.0 (https://github.com/gokadzev/Musify)';
 
   SongLyrics? _parseLrclibResponse(Map<String, dynamic> json) {
     final plain = (json['plainLyrics'] as String?)?.trim() ?? '';
@@ -330,16 +331,15 @@ class LyricsManager {
         continue;
       }
 
-      final timestamps = RegExp(
-        r'\[(\d{1,2}):(\d{1,2}(?:\.\d+)?)\]',
-      ).allMatches(line);
+      final timestamps = RegExp(r'\[(\d{1,2}):(\d{1,2}(?:\.\d+)?)\]')
+          .allMatches(line);
       if (timestamps.isEmpty) continue;
 
       final text = line
           .replaceAll(RegExp(r'\[[^\]]*\]'), '')
           .replaceAll(RegExp(r'<[^>]*>'), '')
           .trim();
-      if (text.isEmpty) continue;
+      final instrumental = LyricsLine.looksInstrumental(text);
 
       for (final match in timestamps) {
         final minutes = int.parse(match.group(1)!);
@@ -350,14 +350,55 @@ class LyricsManager {
         );
         time = offset == Duration.zero ? time : time + offset;
         if (time < Duration.zero) time = Duration.zero;
-        lines.add(LyricsLine(text: text, time: time));
+        lines.add(
+          LyricsLine(text: text, time: time, isInstrumental: instrumental),
+        );
       }
     }
 
-    lines.sort((a, b) => (a.time ?? Duration.zero).compareTo(
-      b.time ?? Duration.zero,
-    ));
-    return lines;
+    lines.sort(
+      (a, b) => (a.time ?? Duration.zero).compareTo(b.time ?? Duration.zero),
+    );
+    return _withInstrumentalBreaks(lines);
+  }
+
+  static const _instrumentalGap = Duration(seconds: 6);
+  static const _instrumentalDelay = Duration(seconds: 4);
+
+  /// Adds a notes row inside long instrumental stretches so the sheet never
+  /// leaves the previous lyric highlighted through a solo or a break. An
+  /// intro longer than [_instrumentalGap] gets one at 0:00.
+  static List<LyricsLine> _withInstrumentalBreaks(List<LyricsLine> lines) {
+    if (lines.length < 2) return lines;
+
+    final result = <LyricsLine>[];
+    final firstTime = lines.first.time ?? Duration.zero;
+    if (firstTime >= _instrumentalGap) {
+      result.add(const LyricsLine(text: '', isInstrumental: true));
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      result.add(line);
+
+      if (i == lines.length - 1 || line.isInstrumental) continue;
+      final next = lines[i + 1];
+      if (next.isInstrumental) continue;
+
+      final start = line.time ?? Duration.zero;
+      final nextStart = next.time ?? Duration.zero;
+      if (nextStart - start < _instrumentalGap) continue;
+
+      result.add(
+        LyricsLine(
+          text: '',
+          time: start + _instrumentalDelay,
+          isInstrumental: true,
+        ),
+      );
+    }
+
+    return result;
   }
 
   Future<String?> _fetchLyricsFromLyricsOvh(

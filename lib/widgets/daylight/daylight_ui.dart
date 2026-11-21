@@ -284,7 +284,7 @@ class DaylightSectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: Daylight.display(16, height: 1.1, letterSpacing: -0.25),
+              style: Daylight.display(18, height: 1.1, letterSpacing: -0.3),
             ),
           ),
           if (trailing != null) trailing!,

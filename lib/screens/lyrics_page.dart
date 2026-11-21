@@ -477,17 +477,37 @@ class _PlainLyricsView extends StatelessWidget {
             for (final line in lines)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  line,
-                  style: Daylight.display(
-                    textSize,
-                    color: Daylight.ink.withValues(alpha: 0.8),
-                    weight: FontWeight.w600,
-                    height: 1.34,
-                  ),
-                ),
+                child: _PlainLyricLine(line: line, textSize: textSize),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Plain text has no timestamps, but a line that is only notes or an
+/// `[Instrumental]` tag still becomes the three-note row.
+class _PlainLyricLine extends StatelessWidget {
+  const _PlainLyricLine({required this.line, required this.textSize});
+
+  final String line;
+  final double textSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final instrumental = LyricsLine.looksInstrumental(line);
+    return Semantics(
+      label: instrumental ? context.l10n!.instrumental : null,
+      excludeSemantics: instrumental,
+      child: Text(
+        instrumental ? instrumentalGlyphs : line,
+        style: Daylight.display(
+          textSize,
+          color: Daylight.ink.withValues(alpha: 0.8),
+          weight: FontWeight.w600,
+          height: 1.34,
+          letterSpacing: instrumental ? 2 : null,
         ),
       ),
     );
@@ -601,6 +621,7 @@ class _SyncedLyricsViewState extends State<_SyncedLyricsView> {
 
   Widget _buildLine(int index, LyricsLine line) {
     final isActive = index == _active;
+    final text = line.isInstrumental ? instrumentalGlyphs : line.text;
     return Padding(
       key: _keys.putIfAbsent(index, () => GlobalKey()),
       padding: const EdgeInsets.only(bottom: 18),
@@ -623,8 +644,13 @@ class _SyncedLyricsViewState extends State<_SyncedLyricsView> {
                 : Daylight.ink.withValues(alpha: 0.34),
             weight: isActive ? FontWeight.w700 : FontWeight.w500,
             height: 1.3,
+            letterSpacing: line.isInstrumental ? 2 : null,
           ),
-          child: Text(line.text, textAlign: TextAlign.left),
+          child: Semantics(
+            label: line.isInstrumental ? context.l10n!.instrumental : null,
+            excludeSemantics: line.isInstrumental,
+            child: Text(text, textAlign: TextAlign.left),
+          ),
         ),
       ),
     );

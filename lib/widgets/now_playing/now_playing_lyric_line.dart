@@ -24,6 +24,7 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
 import 'package:musify/models/position_data.dart';
 import 'package:musify/models/song_lyrics.dart';
@@ -81,7 +82,7 @@ class _NowPlayingLyricLineState extends State<NowPlayingLyricLine> {
     );
   }
 
-  String? _activeLine(Duration position) {
+  LyricsLine? _activeLine(Duration position) {
     final lyrics = _lyrics;
     if (lyrics == null) return null;
 
@@ -98,7 +99,7 @@ class _NowPlayingLyricLineState extends State<NowPlayingLyricLine> {
         (line) => !line.startsWith('©'),
         orElse: () => '',
       );
-      return first.isEmpty ? null : first;
+      return first.isEmpty ? null : LyricsLine(text: first);
     }
 
     LyricsLine? current;
@@ -110,7 +111,7 @@ class _NowPlayingLyricLineState extends State<NowPlayingLyricLine> {
         break;
       }
     }
-    return current?.text;
+    return current;
   }
 
   @override
@@ -124,25 +125,30 @@ class _NowPlayingLyricLineState extends State<NowPlayingLyricLine> {
         stream: audioHandler.positionDataStream,
         initialData: audioHandler.currentPositionData,
         builder: (context, snapshot) {
-          final line = _activeLine(snapshot.data?.position ?? Duration.zero);
-          if (line == null || line.isEmpty) return const SizedBox.shrink();
+          final active = _activeLine(snapshot.data?.position ?? Duration.zero);
+          if (active == null) return const SizedBox.shrink();
 
+          final line = active.isInstrumental ? instrumentalGlyphs : active.text;
           final synced = _lyrics?.isSynced ?? false;
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => context.push('/lyrics'),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                line,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.left,
-                style: Daylight.display(
-                  17,
-                  color: synced ? Daylight.cobalt : Daylight.ink,
-                  weight: FontWeight.w700,
-                  height: 1.25,
+            child: Semantics(
+              label: active.isInstrumental ? context.l10n!.instrumental : null,
+              excludeSemantics: active.isInstrumental,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  line,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.left,
+                  style: Daylight.display(
+                    active.isInstrumental ? 19 : 17,
+                    color: synced ? Daylight.cobalt : Daylight.ink,
+                    height: 1.25,
+                    letterSpacing: active.isInstrumental ? 2 : null,
+                  ),
                 ),
               ),
             ),
