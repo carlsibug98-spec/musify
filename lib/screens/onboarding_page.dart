@@ -127,10 +127,7 @@ class _TopBar extends StatelessWidget {
         children: [
           const DaylightBrandMark(size: 20),
           const SizedBox(width: 8),
-          Text(
-            'Musify',
-            style: Daylight.display(15, letterSpacing: -0.3),
-          ),
+          Text('Resona', style: Daylight.display(15, letterSpacing: -0.3)),
           const Spacer(),
           TextButton(
             onPressed: onSkip,
@@ -234,11 +231,7 @@ class _Chip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: Daylight.ui(
-              10.5,
-              color: color,
-              weight: FontWeight.w600,
-            ),
+            style: Daylight.ui(10.5, color: color, weight: FontWeight.w600),
           ),
         ],
       ),
@@ -247,11 +240,7 @@ class _Chip extends StatelessWidget {
 }
 
 class _Point extends StatelessWidget {
-  const _Point({
-    required this.icon,
-    required this.title,
-    required this.note,
-  });
+  const _Point({required this.icon, required this.title, required this.note});
 
   final IconData icon;
   final String title;
@@ -278,10 +267,7 @@ class _Point extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: Daylight.ui(12.5, weight: FontWeight.w600),
-                ),
+                Text(title, style: Daylight.ui(12.5, weight: FontWeight.w600)),
                 const SizedBox(height: 1),
                 Text(note, style: Daylight.ui(11, color: Daylight.muted)),
               ],
@@ -362,10 +348,7 @@ class _Actions extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    FluentIcons.arrow_download_24_regular,
-                    size: 15,
-                  ),
+                  const Icon(FluentIcons.arrow_download_24_regular, size: 15),
                   const SizedBox(width: 7),
                   Text(
                     context.l10n!.importFromSpotify,

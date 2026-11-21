@@ -83,6 +83,13 @@ abstract final class Daylight {
   static Color get cardTintStrong =>
       isDark ? _darkCardTintStrong : _lightCardTintStrong;
 
+  // Brand -----------------------------------------------------------------
+
+  /// Resona's identity green. It stays fixed while the UI accent is
+  /// user-selectable, so the waveform mark always reads as the brand.
+  static const brand = Color(0xFF22D760);
+  static const brandDeep = Color(0xFF0E9F48);
+
   // Accent ----------------------------------------------------------------
 
   /// The Daylight accent before the user picks one in Settings.

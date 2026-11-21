@@ -24,6 +24,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:musify/constants/app_constants.dart';
 import 'package:musify/constants/version.dart';
 import 'package:musify/extensions/l10n.dart';
+import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/url_launcher.dart';
 import 'package:musify/widgets/mini_player_bottom_space.dart';
 
@@ -43,26 +44,26 @@ class AboutPage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/icons/resona_icon.png',
+                      width: 76,
+                      height: 76,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Text(
-                    'Musify',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'paytoneOne',
-                      letterSpacing: -1.2,
-                    ),
+                    'Resona',
+                    style: Daylight.display(38, height: 1, letterSpacing: -1.2),
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 40,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Daylight for your music.',
+                    style: Daylight.ui(12.5, color: Daylight.muted),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -160,6 +161,16 @@ class AboutPage extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Text(
+                'Resona is a GPL-3.0 rebrand of Musify by Valeri Gokadze.',
+                textAlign: TextAlign.center,
+                style: Daylight.ui(11, height: 1.45, color: Daylight.faint),
+              ),
+            ),
+            const SizedBox(height: 8),
             const MiniPlayerBottomSpace(),
           ],
         ),

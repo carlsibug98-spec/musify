@@ -1,4 +1,4 @@
-"""Verify the actual Windows executable and portable bundle use Musify's icons."""
+"""Verify the actual Windows executable and portable bundle use Resona's icons."""
 
 import ctypes
 from ctypes import wintypes
@@ -64,7 +64,7 @@ def main():
     finally:
         kernel.FreeLibrary(module)
 
-    print(f"Verified {count} embedded Musify icon sizes and the notification PNG.")
+    print(f"Verified {count} embedded Resona icon sizes and the notification PNG.")
 
 
 if __name__ == "__main__":

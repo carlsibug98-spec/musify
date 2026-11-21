@@ -41,7 +41,8 @@ class DaylightBackdrop extends StatelessWidget {
   }
 }
 
-/// Concentric-circle brand mark from the concept board.
+/// Resona's resonance mark. The launcher icon uses seven bars; the compact
+/// in-app cut drops to five so it stays readable at 20-22 px.
 class DaylightBrandMark extends StatelessWidget {
   const DaylightBrandMark({this.size = 20, this.color, super.key});
 
@@ -52,7 +53,7 @@ class DaylightBrandMark extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       size: Size.square(size),
-      painter: _BrandMarkPainter(color ?? Daylight.cobalt),
+      painter: _BrandMarkPainter(color ?? Daylight.brand),
     );
   }
 }
@@ -64,20 +65,23 @@ class _BrandMarkPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final outer = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.075;
-    final inner = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.055;
-    final dot = Paint()..color = color;
+    const heights = <double>[0.36, 0.68, 1, 0.68, 0.36];
+    final barWidth = size.width * 0.13;
+    final gap = size.width * 0.075;
+    final total = heights.length * barWidth + (heights.length - 1) * gap;
+    final centreY = size.height / 2;
+    final paint = Paint()..color = color;
 
-    canvas.drawCircle(center, size.width / 2 - 1, outer);
-    canvas.drawCircle(center, size.width * 0.28, inner);
-    canvas.drawCircle(center, size.width * 0.09, dot);
+    var x = (size.width - total) / 2;
+    for (final height in heights) {
+      final barHeight = size.height * height * 0.92;
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(x, centreY - barHeight / 2, barWidth, barHeight),
+        Radius.circular(barWidth / 2),
+      );
+      canvas.drawRRect(rect, paint);
+      x += barWidth + gap;
+    }
   }
 
   @override
@@ -133,7 +137,7 @@ class DaylightAppBar extends StatelessWidget implements PreferredSizeWidget {
           const DaylightBrandMark(size: 20),
           const SizedBox(width: 7),
           Text(
-            'Musify',
+            'Resona',
             style: Daylight.display(20, height: 1, letterSpacing: -0.4),
           ),
         ],

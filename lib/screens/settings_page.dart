@@ -72,7 +72,7 @@ class SettingsPage extends StatelessWidget {
         _buildOthersSection(context),
         const SizedBox(height: 12),
         Text(
-          'Musify · Daylight',
+          'Resona · Daylight',
           style: Daylight.ui(9.5, color: Daylight.faint),
         ),
         const SizedBox(height: 16),
