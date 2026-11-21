@@ -284,5 +284,15 @@
   "useProxyDescription": "Używaj proxy tylko wtedy, gdy strumieniowanie nie powiedzie się, niepotrzebne użycie może uszkodzić odtwarzanie.",
   "userPlaylists": "Playlisty użytkownika",
   "yes": "Tak",
-  "youtubePlaylistLinkOrId": "Link lub ID playlisty YouTube"
+  "youtubePlaylistLinkOrId": "Link lub ID playlisty YouTube",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

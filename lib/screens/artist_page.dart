@@ -256,6 +256,63 @@ class _ArtistPageState extends State<ArtistPage> {
                         onTap: _openArtist,
                       ),
                     ],
+                    if (_artistTitle.isNotEmpty) ...[
+                      const SizedBox(height: 30),
+                      DaylightSectionHeader(
+                        title: context.l10n!.featuringArtist(_artistTitle),
+                      ),
+                      const SizedBox(height: 10),
+                      DaylightCard(
+                        onTap: () => context.push(
+                          NavigationManager.artistSongsPath(
+                            context,
+                            _resolvedArtistId,
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                gradient: Daylight.cobaltGradient,
+                              ),
+                              child: Icon(
+                                FluentIcons.music_note_2_24_filled,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    context.l10n!.featuringArtist(_artistTitle),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${context.l10n!.playlist} · Resona',
+                                    style: TextStyle(
+                                      color: Daylight.muted,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              FluentIcons.chevron_right_24_regular,
+                              color: Daylight.muted,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

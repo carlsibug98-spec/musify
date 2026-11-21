@@ -41,8 +41,8 @@ class DaylightBackdrop extends StatelessWidget {
   }
 }
 
-/// Resona's resonance mark. The launcher icon uses seven bars; the compact
-/// in-app cut drops to five so it stays readable at 20-22 px.
+/// Resona's default in-app mark: the same desktop app icon used at launch.
+/// The old green five-bar cut is no longer used as the default logo.
 class DaylightBrandMark extends StatelessWidget {
   const DaylightBrandMark({this.size = 20, this.color, super.key});
 
@@ -51,42 +51,15 @@ class DaylightBrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.square(size),
-      painter: _BrandMarkPainter(color ?? Daylight.brand),
+    return Image.asset(
+      'assets/icons/resona_icon.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      semanticLabel: 'Resona',
+      // `color` is kept for call-site compatibility with the previous mark.
     );
   }
-}
-
-class _BrandMarkPainter extends CustomPainter {
-  const _BrandMarkPainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const heights = <double>[0.36, 0.68, 1, 0.68, 0.36];
-    final barWidth = size.width * 0.13;
-    final gap = size.width * 0.075;
-    final total = heights.length * barWidth + (heights.length - 1) * gap;
-    final centreY = size.height / 2;
-    final paint = Paint()..color = color;
-
-    var x = (size.width - total) / 2;
-    for (final height in heights) {
-      final barHeight = size.height * height * 0.92;
-      final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(x, centreY - barHeight / 2, barWidth, barHeight),
-        Radius.circular(barWidth / 2),
-      );
-      canvas.drawRRect(rect, paint);
-      x += barWidth + gap;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BrandMarkPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 /// App bar used across the daylight screens.

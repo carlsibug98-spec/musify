@@ -284,5 +284,15 @@
   "useProxyDescription": "Use the proxy only when streaming fails, unnecessary use may break playback.",
   "userPlaylists": "Λίστες αναπαραγωγής χρήστη",
   "yes": "Ναι",
-  "youtubePlaylistLinkOrId": "YouTube playlist link or ID "
+  "youtubePlaylistLinkOrId": "YouTube playlist link or ID ",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

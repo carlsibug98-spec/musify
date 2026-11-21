@@ -25,8 +25,10 @@ import 'package:audio_service/audio_service.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
+import 'package:musify/services/common_services.dart';
 import 'package:musify/theme/daylight.dart';
 import 'package:musify/widgets/daylight/press_scale.dart';
+import 'package:musify/widgets/now_playing/saved_in_sheet.dart';
 import 'package:musify/utilities/mediaitem.dart';
 import 'package:musify/utilities/playlist_dialogs.dart';
 
@@ -56,7 +58,11 @@ class _SongQuickActionsState extends State<SongQuickActions> {
     super.dispose();
   }
 
-  Future<void> _openPlaylistSheet() async {
+  Future<void> _openPlaylistSheet({required bool isLiked}) async {
+    if (isLiked) {
+      await SavedInSheet.show(context, widget.metadata);
+      return;
+    }
     final addedToLiked = await showAddToPlaylistDialog(
       context,
       song: mediaItemToMap(widget.metadata),
@@ -75,54 +81,64 @@ class _SongQuickActionsState extends State<SongQuickActions> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n!;
-    final active = _addedToLiked;
+    final songId = widget.metadata.id;
 
-    return Semantics(
-      button: true,
-      label: active ? l10n.liked : l10n.addToPlaylist,
-      child: SizedBox(
-        width: 40,
-        height: 40,
-        child: PressScale(
-          child: Material(
-            color: active ? Daylight.cobalt : Daylight.card,
-            shape: CircleBorder(
-              side: BorderSide(
-                color: active
-                    ? Colors.transparent
-                    : Daylight.lineStrong.withValues(alpha: 0.5),
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: _openPlaylistSheet,
-              customBorder: const CircleBorder(),
-              child: Center(
-                child: AnimatedSwitcher(
-                  duration: Daylight.motion(
-                    context,
-                    const Duration(milliseconds: 180),
+    return ValueListenableBuilder<List>(
+      valueListenable: userLikedSongsList,
+      builder: (context, likedSongs, _) {
+        final isLiked = likedSongs.any(
+          (song) => song['ytid']?.toString() == songId,
+        );
+        final active = isLiked || _addedToLiked;
+
+        return Semantics(
+          button: true,
+          label: active ? l10n.savedIn : l10n.addToPlaylist,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: PressScale(
+              child: Material(
+                color: active ? Daylight.cobalt : Daylight.card,
+                shape: CircleBorder(
+                  side: BorderSide(
+                    color: active
+                        ? Colors.transparent
+                        : Daylight.lineStrong.withValues(alpha: 0.5),
                   ),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeOut,
-                  transitionBuilder: (child, animation) => ScaleTransition(
-                    scale: animation,
-                    child: FadeTransition(opacity: animation, child: child),
-                  ),
-                  child: Icon(
-                    active
-                        ? FluentIcons.checkmark_24_filled
-                        : FluentIcons.add_24_regular,
-                    key: ValueKey(active),
-                    size: 20,
-                    color: active ? Daylight.onAccent : Daylight.ink,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => _openPlaylistSheet(isLiked: isLiked),
+                  customBorder: const CircleBorder(),
+                  child: Center(
+                    child: AnimatedSwitcher(
+                      duration: Daylight.motion(
+                        context,
+                        const Duration(milliseconds: 180),
+                      ),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeOut,
+                      transitionBuilder: (child, animation) => ScaleTransition(
+                        scale: animation,
+                        child: FadeTransition(opacity: animation, child: child),
+                      ),
+                      child: Icon(
+                        active
+                            ? FluentIcons.checkmark_24_filled
+                            : FluentIcons.add_24_regular,
+                        key: ValueKey(active),
+                        size: 20,
+                        color: active ? Daylight.onAccent : Daylight.ink,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

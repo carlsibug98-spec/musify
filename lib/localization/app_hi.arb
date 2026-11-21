@@ -284,5 +284,15 @@
   "useProxyDescription": "Use the proxy only when streaming fails, unnecessary use may break playback.",
   "userPlaylists": "उपयोगकर्ता की प्लेलिस्ट्स",
   "yes": "Yes",
-  "youtubePlaylistLinkOrId": "YouTube प्लेलिस्ट लिंक या ID"
+  "youtubePlaylistLinkOrId": "YouTube प्लेलिस्ट लिंक या ID",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

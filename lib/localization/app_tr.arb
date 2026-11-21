@@ -284,5 +284,15 @@
   "useProxyDescription": "Yalnızca bağlantı sorunları olduğunda proxy kullanın, gereksiz kullanım müzik oynatmayı bir ihtimal bozabilir.",
   "userPlaylists": "Kullanıcı Listeleri",
   "yes": "Evet",
-  "youtubePlaylistLinkOrId": "YouTube listesi bağlantısı veya ID'si"
+  "youtubePlaylistLinkOrId": "YouTube listesi bağlantısı veya ID'si",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

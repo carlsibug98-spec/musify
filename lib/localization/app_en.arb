@@ -394,5 +394,23 @@
   "notInterested": "Not interested",
   "hideThisSection": "Hide this section",
   "notInterestedMarked": "We'll show fewer songs like this",
-  "sectionHidden": "Section hidden"
+  "sectionHidden": "Section hidden",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "@featuringArtist": {
+    "description": "Artist shelf of playlists featuring the artist",
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

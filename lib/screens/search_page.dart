@@ -471,6 +471,30 @@ class _SearchPageState extends State<SearchPage> {
 
     final shortcuts = <BrowseTileData>[
       BrowseTileData(
+        title: context.l10n!.musicCategory,
+        color: BrowseColors.cobalt,
+        icon: FluentIcons.music_note_2_24_filled,
+        onTap: () => genreSearchRequest.value = 'pop songs',
+      ),
+      BrowseTileData(
+        title: context.l10n!.podcasts,
+        color: BrowseColors.violet,
+        icon: FluentIcons.mic_24_regular,
+        onTap: () => _showCategoryUnavailable(context, context.l10n!.podcasts),
+      ),
+      BrowseTileData(
+        title: context.l10n!.audiobooks,
+        color: BrowseColors.sky,
+        icon: FluentIcons.book_24_regular,
+        onTap: () => _showCategoryUnavailable(context, context.l10n!.audiobooks),
+      ),
+      BrowseTileData(
+        title: context.l10n!.liveEvents,
+        color: BrowseColors.rose,
+        icon: FluentIcons.calendar_24_regular,
+        onTap: () => _showCategoryUnavailable(context, context.l10n!.liveEvents),
+      ),
+      BrowseTileData(
         title: context.l10n!.madeForYou,
         color: BrowseColors.cobalt,
         icon: FluentIcons.sparkle_24_filled,
@@ -504,12 +528,128 @@ class _SearchPageState extends State<SearchPage> {
         const SizedBox(height: 4),
         BrowseTileGrid(tiles: tiles),
         const SizedBox(height: 18),
+        DaylightSectionHeader(title: context.l10n!.discoverSomethingNew),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 118,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _railCard(
+                context,
+                context.l10n!.madeForYou,
+                BrowseColors.violet,
+                FluentIcons.sparkle_24_filled,
+                () => context.go('/home'),
+              ),
+              _railCard(
+                context,
+                context.l10n!.likedSongs,
+                BrowseColors.rose,
+                FluentIcons.heart_24_filled,
+                () => context.push('/library/userSongs/liked'),
+              ),
+              _railCard(
+                context,
+                context.l10n!.recentlyPlayed,
+                BrowseColors.teal,
+                FluentIcons.history_24_regular,
+                () => context.push('/library/userSongs/recents'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        DaylightSectionHeader(title: context.l10n!.upcomingReleases),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 118,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _railCard(
+                context,
+                context.l10n!.genres,
+                BrowseColors.indigo,
+                FluentIcons.music_note_2_24_filled,
+                () => genreSearchRequest.value = 'pop songs',
+              ),
+              _railCard(
+                context,
+                context.l10n!.downloads,
+                BrowseColors.pine,
+                FluentIcons.arrow_download_24_regular,
+                () => context.push('/library/downloads'),
+              ),
+              _railCard(
+                context,
+                context.l10n!.browseAll,
+                BrowseColors.sun,
+                FluentIcons.grid_24_regular,
+                () => genreSearchRequest.value = 'new releases',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
         GenreGrid(
           title: context.l10n!.genres,
           actionLabel: context.l10n!.seeAll,
           onAction: () => genreSearchRequest.value = 'pop songs',
         ),
       ],
+    );
+  }
+
+  Widget _railCard(
+    BuildContext context,
+    String label,
+    Color color,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: SizedBox(
+        width: 104,
+        child: DaylightCard(
+          onTap: onTap,
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 26),
+              const Spacer(),
+              Text(
+                label,
+                maxLines: 2,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryUnavailable(BuildContext context, String category) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(category),
+        content: Text(
+          dialogContext.l10n!.categoryUnavailable(category),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 

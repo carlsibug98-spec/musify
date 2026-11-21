@@ -284,5 +284,15 @@
   "useProxyDescription": "Використовуйте проксі сервер лише у разі збою потокової передачі, непотрібне використання може перервати відтворення.",
   "userPlaylists": "Власні плейлисти",
   "yes": "Так",
-  "youtubePlaylistLinkOrId": "YouTube URL або ID плейлиста"
+  "youtubePlaylistLinkOrId": "YouTube URL або ID плейлиста",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

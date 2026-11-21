@@ -284,5 +284,15 @@
   "useProxyDescription": "Använd proxyen endast när streaming misslyckas, onödig användning kan bryta uppspelningen.",
   "userPlaylists": "Användarspellistor",
   "yes": "Yes",
-  "youtubePlaylistLinkOrId": "Länk eller ID för YouTube-spellista"
+  "youtubePlaylistLinkOrId": "Länk eller ID för YouTube-spellista",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

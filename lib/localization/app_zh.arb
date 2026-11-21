@@ -284,5 +284,15 @@
   "useProxyDescription": "仅在流媒体播放失败时才使用代理，不必要的代理使用可能会导致播放中断。",
   "userPlaylists": "用户播放列表",
   "yes": "是",
-  "youtubePlaylistLinkOrId": "YouTube 播放列表链接或 ID"
+  "youtubePlaylistLinkOrId": "YouTube 播放列表链接或 ID",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }

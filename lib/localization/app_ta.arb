@@ -284,5 +284,15 @@
   "useProxyDescription": "ஸ்ட்ரீமிங் தோல்வியுற்றால் மட்டுமே ப்ராக்ஸியை பயன்படுத்தவும்",
   "userPlaylists": "பயனர் பிளேலிஸ்ட்கள்",
   "yes": "ஆம்",
-  "youtubePlaylistLinkOrId": "YouTube பிளேலிஸ்ட் இணைப்பு அல்லது ID"
+  "youtubePlaylistLinkOrId": "YouTube பிளேலிஸ்ட் இணைப்பு அல்லது ID",
+  "savedIn": "Saved in",
+  "newPlaylist": "New playlist",
+  "discoverSomethingNew": "Discover something new",
+  "upcomingReleases": "Upcoming releases",
+  "podcasts": "Podcasts",
+  "audiobooks": "Audiobooks",
+  "liveEvents": "Live Events",
+  "musicCategory": "Music",
+  "featuringArtist": "Featuring {artist}",
+  "categoryUnavailable": "{category} is not available in Resona. This layout is reconstructed from the reference session."
 }
