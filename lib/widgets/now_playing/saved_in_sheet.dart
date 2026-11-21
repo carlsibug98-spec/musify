@@ -32,19 +32,31 @@ import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/mediaitem.dart';
 import 'package:musify/utilities/playlist_dialogs.dart';
 
-/// Spotify-style "Saved in" sheet. It lists every place the current song is
-/// saved (Liked Songs plus playlists) and lets the user toggle each one.
+/// Spotify-style "Saved in" sheet. It lists every place the current song can
+/// be saved (Liked Songs plus each playlist) and toggles the song in place.
 class SavedInSheet extends StatelessWidget {
-  const SavedInSheet({super.key, required this.metadata});
+  const SavedInSheet({
+    super.key,
+    required this.metadata,
+    this.showLikedSongs = true,
+  });
 
   final MediaItem metadata;
+  final bool showLikedSongs;
 
-  static Future<void> show(BuildContext context, MediaItem metadata) {
+  static Future<void> show(
+    BuildContext context,
+    MediaItem metadata, {
+    bool showLikedSongs = true,
+  }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => SavedInSheet(metadata: metadata),
+      builder: (_) => SavedInSheet(
+        metadata: metadata,
+        showLikedSongs: showLikedSongs,
+      ),
     );
   }
 
@@ -63,107 +75,132 @@ class SavedInSheet extends StatelessWidget {
             final isLiked = likedSongs.any(
               (item) => item['ytid']?.toString() == songId,
             );
-            final savedPlaylists = playlists.where((playlist) {
-              final songs = playlist['list'] as List? ?? const [];
-              return songs.any((item) => item['ytid']?.toString() == songId);
-            }).toList();
 
-            return Container(
-              decoration: BoxDecoration(
-                color: Daylight.card,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Daylight.card,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
                 ),
-              ),
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.viewPaddingOf(context).bottom + 12,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 10),
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Daylight.lineStrong,
-                        borderRadius: BorderRadius.circular(99),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.viewPaddingOf(context).bottom + 12,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Daylight.lineStrong,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.savedIn,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          metadata.title,
-                          style: TextStyle(color: Daylight.muted, fontSize: 12),
-                        ),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.savedIn,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            metadata.title,
+                            style: TextStyle(color: Daylight.muted, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Divider(height: 1),
-                  _SavedRow(
-                    icon: FluentIcons.heart_24_regular,
-                    color: const Color(0xFF7C4DFF),
-                    title: l10n.likedSongs,
-                    subtitle: '${likedSongs.length} ${l10n.songs.toLowerCase()}',
-                    saved: isLiked,
-                    onTap: () {
-                      unawaited(
-                        updateSongLikeStatus(songId, !isLiked, songData: song),
-                      );
-                    },
-                  ),
-                  for (final playlist in savedPlaylists)
-                    _SavedRow(
-                      icon: FluentIcons.music_note_1_24_regular,
-                      color: Daylight.accent,
-                      title: playlist['title']?.toString() ?? l10n.playlist,
-                      subtitle: '${(playlist['list'] as List? ?? []).length} '
-                          '${l10n.songs.toLowerCase()}',
-                      saved: true,
-                      onTap: () {
-                        removeSongFromPlaylist(Map.from(playlist), song);
-                        showToast(context, l10n.songRemoved);
-                      },
+                    const Divider(height: 1),
+                    Flexible(
+                      child: ListView(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        children: [
+                          if (showLikedSongs)
+                            _SavedRow(
+                              icon: FluentIcons.heart_24_regular,
+                              color: const Color(0xFF7C4DFF),
+                              title: l10n.likedSongs,
+                              subtitle:
+                                  '${likedSongs.length} ${l10n.songs.toLowerCase()}',
+                              saved: isLiked,
+                              onTap: () {
+                                unawaited(
+                                  updateSongLikeStatus(
+                                    songId,
+                                    !isLiked,
+                                    songData: song,
+                                  ),
+                                );
+                              },
+                            ),
+                          for (final playlist in playlists)
+                            _playlistRow(context, playlist, song),
+                          const Divider(height: 1),
+                          _SavedRow(
+                            icon: FluentIcons.folder_24_regular,
+                            color: Daylight.accent,
+                            title: l10n.newPlaylist,
+                            saved: false,
+                            onTap: () {
+                              Navigator.pop(context);
+                              showCreatePlaylistDialog(context, songToAdd: song);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  const Divider(height: 1),
-                  _SavedRow(
-                    icon: FluentIcons.add_24_regular,
-                    color: Daylight.accent,
-                    title: l10n.addToPlaylist,
-                    saved: false,
-                    onTap: () {
-                      Navigator.pop(context);
-                      showAddToPlaylistDialog(context, song: song);
-                    },
-                  ),
-                  _SavedRow(
-                    icon: FluentIcons.folder_24_regular,
-                    color: Daylight.accent,
-                    title: l10n.newPlaylist,
-                    saved: false,
-                    onTap: () {
-                      Navigator.pop(context);
-                      showCreatePlaylistDialog(context, songToAdd: song);
-                    },
-                  ),
-                  const SizedBox(height: 6),
-                ],
+                    const SizedBox(height: 6),
+                  ],
+                ),
               ),
             );
           },
         );
+      },
+    );
+  }
+
+  /// One row per custom playlist. A tap adds the song when it is missing and
+  /// removes it when it is already there, so no secondary dialog is needed.
+  Widget _playlistRow(BuildContext context, Map playlist, Map song) {
+    final l10n = context.l10n!;
+    final songs = playlist['list'] as List? ?? const [];
+    final saved = songs.any(
+      (item) => item['ytid']?.toString() == song['ytid']?.toString(),
+    );
+
+    return _SavedRow(
+      icon: FluentIcons.music_note_1_24_regular,
+      color: Daylight.accent,
+      title: playlist['title']?.toString() ?? l10n.playlist,
+      subtitle: '${songs.length} ${l10n.songs.toLowerCase()}',
+      saved: saved,
+      onTap: () {
+        if (saved) {
+          removeSongFromPlaylist(Map.from(playlist), song);
+          showToast(context, l10n.songRemoved);
+        } else {
+          final message = addSongInCustomPlaylist(
+            context,
+            playlist['ytid']?.toString() ?? '',
+            song,
+          );
+          showToast(context, message);
+        }
       },
     );
   }

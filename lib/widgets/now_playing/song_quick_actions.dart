@@ -29,8 +29,6 @@ import 'package:musify/services/common_services.dart';
 import 'package:musify/theme/daylight.dart';
 import 'package:musify/widgets/daylight/press_scale.dart';
 import 'package:musify/widgets/now_playing/saved_in_sheet.dart';
-import 'package:musify/utilities/mediaitem.dart';
-import 'package:musify/utilities/playlist_dialogs.dart';
 
 /// The single circled "+" beside the now-playing title.
 ///
@@ -58,18 +56,19 @@ class _SongQuickActionsState extends State<SongQuickActions> {
     super.dispose();
   }
 
-  Future<void> _openPlaylistSheet({required bool isLiked}) async {
-    if (isLiked) {
-      await SavedInSheet.show(context, widget.metadata);
-      return;
-    }
-    final addedToLiked = await showAddToPlaylistDialog(
+  Future<void> _openPlaylistSheet() async {
+    final songId = widget.metadata.id;
+    bool isSongLiked() => userLikedSongsList.value.any(
+          (song) => song['ytid']?.toString() == songId,
+        );
+
+    final wasLiked = isSongLiked();
+    await SavedInSheet.show(
       context,
-      song: mediaItemToMap(widget.metadata),
+      widget.metadata,
       showLikedSongs: !_isRadio,
     );
-
-    if (!mounted || !addedToLiked) return;
+    if (!mounted || wasLiked || !isSongLiked()) return;
 
     _resetTimer?.cancel();
     setState(() => _addedToLiked = true);
@@ -109,7 +108,7 @@ class _SongQuickActionsState extends State<SongQuickActions> {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
-                  onTap: () => _openPlaylistSheet(isLiked: isLiked),
+                  onTap: _openPlaylistSheet,
                   customBorder: const CircleBorder(),
                   child: Center(
                     child: AnimatedSwitcher(
