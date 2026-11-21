@@ -26,6 +26,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/main.dart';
 import 'package:musify/theme/daylight.dart';
+import 'package:musify/widgets/artist_preference_picker.dart';
 import 'package:musify/widgets/daylight/daylight_ui.dart';
 
 class OnboardingPage extends StatelessWidget {
@@ -38,7 +39,7 @@ class OnboardingPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _TopBar(onSkip: () => _finish(context)),
+            _TopBar(onSkip: () => _skip(context)),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(22, 6, 22, 20),
@@ -83,7 +84,28 @@ class OnboardingPage extends StatelessWidget {
     );
   }
 
+  /// Start listening takes the user through the taste step first: pick
+  /// favourite artists, then Musify seeds the home feed from them (the
+  /// behaviour REA recovered from Spotify's onboarding quiz). Skipping goes
+  /// straight home.
   void _finish(BuildContext context) {
+    context.push(
+      '/pick-artists',
+      extra: ArtistPreferencePicker(
+        onDone: () {
+          if (context.mounted) {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  void _skip(BuildContext context) {
     if (context.canPop()) {
       context.pop();
       return;

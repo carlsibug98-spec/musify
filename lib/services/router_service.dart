@@ -44,6 +44,7 @@ import 'package:musify/screens/time_machine_page.dart';
 import 'package:musify/screens/user_songs_page.dart';
 import 'package:musify/services/playlist_download_service.dart';
 import 'package:musify/services/settings_manager.dart';
+import 'package:musify/widgets/artist_preference_picker.dart';
 import 'package:musify/widgets/offline_search_placeholder.dart';
 
 class NavigationManager {
@@ -61,6 +62,15 @@ class NavigationManager {
         path: '/onboarding',
         pageBuilder: (context, state) =>
             _pushPage(child: const OnboardingPage(), state: state),
+      ),
+      GoRoute(
+        path: '/pick-artists',
+        pageBuilder: (context, state) => _pushPage(
+          child: state.extra is ArtistPreferencePicker
+              ? state.extra as ArtistPreferencePicker
+              : const ArtistPreferencePicker(),
+          state: state,
+        ),
       ),
       GoRoute(
         path: '/queue',

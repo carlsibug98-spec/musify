@@ -30,6 +30,8 @@ import 'package:http/http.dart' as http;
 import 'package:musify/constants/clients.dart';
 import 'package:musify/main.dart' show logger;
 import 'package:musify/models/song_lyrics.dart';
+import 'package:musify/services/artist_preference_service.dart';
+import 'package:musify/services/artist_service.dart' show getArtistCatalog;
 import 'package:musify/services/data_manager.dart';
 import 'package:musify/services/io_service.dart';
 import 'package:musify/services/lyrics_manager.dart';
@@ -184,6 +186,12 @@ Future<List> fetchSongsList(String searchQuery) async {
 
 Future<List> getRecommendedSongs() async {
   try {
+    // Artist preferences are the strongest seed: this mirrors Spotify's quiz
+    // flow, where the chosen artists feed the whole recommendation feed.
+    if (hasArtistPreferences) {
+      final fromArtists = await _getRecommendationsFromPreferredArtists();
+      if (fromArtists.isNotEmpty) return fromArtists;
+    }
     if (externalRecommendations.value && userRecentlyPlayed.value.isNotEmpty) {
       return await _getRecommendationsFromRecentlyPlayed();
     } else {
@@ -197,6 +205,31 @@ Future<List> getRecommendedSongs() async {
     );
     return [];
   }
+}
+
+/// Builds recommendations from the user's chosen favourite artists. Each
+/// artist's top songs become seeds for related-video discovery, exactly like
+/// the seed-song path but driven by the onboarding artist answers.
+Future<List> _getRecommendationsFromPreferredArtists() async {
+  final artists = preferredArtists.value.take(5).toList();
+  final seeds = <Map>[];
+  for (final artist in artists) {
+    try {
+      final catalog = await getArtistCatalog(artist.id);
+      final songs = (catalog?['list'] as List? ?? const [])
+          .whereType<Map>()
+          .take(2);
+      seeds.addAll(songs);
+    } catch (e, stackTrace) {
+      logger.log(
+        'Artist seed failed for ${artist.name}',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+  if (seeds.isEmpty) return [];
+  return _getRecommendationsFromSeedSongs(seeds);
 }
 
 Future<List> _getRecommendationsFromRecentlyPlayed() async {

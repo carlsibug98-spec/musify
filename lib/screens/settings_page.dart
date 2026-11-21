@@ -344,6 +344,12 @@ class SettingsPage extends StatelessWidget {
           onTap: () => context.push('/library/downloads'),
         ),
         CustomBar(
+          context.l10n!.chooseFavoriteArtists,
+          FluentIcons.heart_24_regular,
+          description: context.l10n!.chooseFavoriteArtistsNote,
+          onTap: () => context.push('/pick-artists'),
+        ),
+        CustomBar(
           context.l10n!.startListening,
           FluentIcons.play_circle_24_regular,
           description: context.l10n!.onboardingTitle,
