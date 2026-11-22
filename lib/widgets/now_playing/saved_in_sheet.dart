@@ -23,7 +23,7 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:musify/extensions/l10n.dart';
 import 'package:musify/services/common_services.dart';
 import 'package:musify/services/playlists_manager.dart';
@@ -53,10 +53,8 @@ class SavedInSheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => SavedInSheet(
-        metadata: metadata,
-        showLikedSongs: showLikedSongs,
-      ),
+      builder: (_) =>
+          SavedInSheet(metadata: metadata, showLikedSongs: showLikedSongs),
     );
   }
 
@@ -80,91 +78,98 @@ class SavedInSheet extends StatelessWidget {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.sizeOf(context).height * 0.75,
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Daylight.card,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
+              child: Material(
+                color: Daylight.card,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.viewPaddingOf(context).bottom + 12,
                   ),
-                ),
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.viewPaddingOf(context).bottom + 12,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 10),
-                    Center(
-                      child: Container(
-                        width: 36,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Daylight.lineStrong,
-                          borderRadius: BorderRadius.circular(99),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 10),
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Daylight.lineStrong,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.savedIn,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            metadata.title,
-                            style: TextStyle(color: Daylight.muted, fontSize: 12),
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.savedIn,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              metadata.title,
+                              style: TextStyle(
+                                color: Daylight.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Divider(height: 1),
-                    Flexible(
-                      child: ListView(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        children: [
-                          if (showLikedSongs)
+                      const Divider(height: 1),
+                      Flexible(
+                        child: ListView(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          children: [
+                            if (showLikedSongs)
+                              _SavedRow(
+                                icon: FluentIcons.heart_24_regular,
+                                color: const Color(0xFF7C4DFF),
+                                title: l10n.likedSongs,
+                                subtitle:
+                                    '${likedSongs.length} ${l10n.songs.toLowerCase()}',
+                                saved: isLiked,
+                                onTap: () {
+                                  unawaited(
+                                    updateSongLikeStatus(
+                                      songId,
+                                      !isLiked,
+                                      songData: song,
+                                    ),
+                                  );
+                                },
+                              ),
+                            for (final playlist in playlists)
+                              _playlistRow(context, playlist, song),
+                            const Divider(height: 1),
                             _SavedRow(
-                              icon: FluentIcons.heart_24_regular,
-                              color: const Color(0xFF7C4DFF),
-                              title: l10n.likedSongs,
-                              subtitle:
-                                  '${likedSongs.length} ${l10n.songs.toLowerCase()}',
-                              saved: isLiked,
+                              icon: FluentIcons.folder_24_regular,
+                              color: Daylight.accent,
+                              title: l10n.newPlaylist,
+                              saved: false,
                               onTap: () {
-                                unawaited(
-                                  updateSongLikeStatus(
-                                    songId,
-                                    !isLiked,
-                                    songData: song,
-                                  ),
+                                Navigator.pop(context);
+                                showCreatePlaylistDialog(
+                                  context,
+                                  songToAdd: song,
                                 );
                               },
                             ),
-                          for (final playlist in playlists)
-                            _playlistRow(context, playlist, song),
-                          const Divider(height: 1),
-                          _SavedRow(
-                            icon: FluentIcons.folder_24_regular,
-                            color: Daylight.accent,
-                            title: l10n.newPlaylist,
-                            saved: false,
-                            onTap: () {
-                              Navigator.pop(context);
-                              showCreatePlaylistDialog(context, songToAdd: song);
-                            },
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                  ],
+                      const SizedBox(height: 6),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -239,7 +244,10 @@ class _SavedRow extends StatelessWidget {
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: subtitle == null
           ? null
-          : Text(subtitle!, style: TextStyle(color: Daylight.muted, fontSize: 11)),
+          : Text(
+              subtitle!,
+              style: TextStyle(color: Daylight.muted, fontSize: 11),
+            ),
       trailing: Icon(
         saved ? FluentIcons.checkmark_24_filled : FluentIcons.add_24_regular,
         color: saved ? Daylight.accent : Daylight.muted,

@@ -1,6 +1,6 @@
 # Resona After Dark Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Give Resona a black-first Spotify-grade dark UI with a cover-derived player backdrop and a Profile destination, without losing the Daylight identity or the no-ads/no-podcasts product model.
 
@@ -49,7 +49,7 @@
 - `brightness` remains a mutable top-level `Brightness` in
   `lib/theme/app_themes.dart` so tests can switch modes.
 
-- [ ] **Step 1: Write the failing token test**
+- [x] **Step 1: Write the failing token test**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -74,12 +74,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run it and verify it fails**
+- [x] **Step 2: Run it and verify it fails**
 
 Run: `flutter test test/daylight_dark_tokens_test.dart`
 Expected: FAIL because `onColor` does not exist and the dark values are the old charcoal ones.
 
-- [ ] **Step 3: Retune the dark tokens**
+- [x] **Step 3: Retune the dark tokens**
 
 In `lib/theme/daylight.dart` replace the dark constants with:
 
@@ -124,12 +124,12 @@ Make the shadows direction-aware: use `Colors.black.withValues(alpha: isDark ? 0
 for `cardShadow`, `Colors.black.withValues(alpha: isDark ? 0.62 : 0.18)` for
 `floatingShadow`, and keep `cobaltShadow` on `cobaltDeep`.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `flutter test test/daylight_dark_tokens_test.dart`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Analyze and commit**
+- [x] **Step 5: Analyze and commit**
 
 Run: `flutter analyze --no-pub`
 Expected: no new issues.
@@ -152,7 +152,7 @@ git commit -m "feat: retune dark theme to a black-first palette"
   `Color artworkBackdropBottom()`.
 - Consumes: `Daylight.groundTop`, `Daylight.groundBottom`, `Daylight.isDark`.
 
-- [ ] **Step 1: Write the failing helper test**
+- [x] **Step 1: Write the failing helper test**
 
 ```dart
 import 'dart:ui';
@@ -180,12 +180,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run it and verify it fails**
+- [x] **Step 2: Run it and verify it fails**
 
 Run: `flutter test test/artwork_backdrop_test.dart`
 Expected: FAIL because the helpers do not exist.
 
-- [ ] **Step 3: Implement the helpers**
+- [x] **Step 3: Implement the helpers**
 
 In `lib/services/artwork_palette.dart`:
 
@@ -213,12 +213,12 @@ Color artworkBackdropBottom() =>
     Daylight.isDark ? Daylight.groundBottom : Daylight.ground;
 ```
 
-- [ ] **Step 4: Run the helper test**
+- [x] **Step 4: Run the helper test**
 
 Run: `flutter test test/artwork_backdrop_test.dart`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/services/artwork_palette.dart test/artwork_backdrop_test.dart
@@ -238,7 +238,7 @@ git commit -m "feat: add contrast-safe artwork backdrop colours"
 - Produces: `NowPlayingBackdrop({required MediaItem metadata, required Widget child, Key? key})`.
 - Consumes: `songArtworkTint(MediaItem)` and `artworkBackdropTop(Color?)`.
 
-- [ ] **Step 1: Write the failing widget test**
+- [x] **Step 1: Write the failing widget test**
 
 ```dart
 import 'package:audio_service/audio_service.dart';
@@ -262,12 +262,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run it and verify it fails**
+- [x] **Step 2: Run it and verify it fails**
 
 Run: `flutter test test/now_playing_backdrop_test.dart`
 Expected: FAIL because the widget does not exist.
 
-- [ ] **Step 3: Create the backdrop widget**
+- [x] **Step 3: Create the backdrop widget**
 
 `NowPlayingBackdrop` is a `StatelessWidget` using `FutureBuilder<Color?>` on
 `songArtworkTint(metadata)`:
@@ -285,7 +285,7 @@ Expected: FAIL because the widget does not exist.
 
 Add the GPL header verbatim from `lib/widgets/now_playing/now_playing_artwork.dart`.
 
-- [ ] **Step 4: Wrap the player body**
+- [x] **Step 4: Wrap the player body**
 
 In `lib/screens/now_playing_page.dart`, change the `StreamBuilder` body to:
 
@@ -311,7 +311,7 @@ return NowPlayingBackdrop(
 Keep `Scaffold(backgroundColor: Colors.transparent)`. Do not wrap the app bar
 twice in `SafeArea`.
 
-- [ ] **Step 5: Run tests and analyze**
+- [x] **Step 5: Run tests and analyze**
 
 Run: `flutter test test/now_playing_backdrop_test.dart`
 Expected: PASS.
@@ -319,7 +319,7 @@ Expected: PASS.
 Run: `flutter analyze --no-pub`
 Expected: no new issues.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/widgets/now_playing/now_playing_backdrop.dart lib/screens/now_playing_page.dart test/now_playing_backdrop_test.dart
@@ -346,7 +346,7 @@ git commit -m "feat: add cover-derived full-player backdrop"
   `listeningStatsService.monthStats`, `listeningStatsMonthKey`,
   `monthDisplayMinutes`.
 
-- [ ] **Step 1: Write the failing formatter and overflow tests**
+- [x] **Step 1: Write the failing formatter and overflow tests**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -376,12 +376,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run it and verify it fails**
+- [x] **Step 2: Run it and verify it fails**
 
 Run: `flutter test test/profile_summary_test.dart`
 Expected: FAIL because `profileCountLabel` and `ProfileStat` do not exist.
 
-- [ ] **Step 3: Create `ProfileStat` and the profile header**
+- [x] **Step 3: Create `ProfileStat` and the profile header**
 
 Create `lib/widgets/profile_stat.dart` with the GPL header, the
 `profileCountLabel` function above, and a `ProfileStat` that renders the value in
@@ -404,7 +404,7 @@ In `lib/screens/settings_page.dart`, import `ProfileStat` and add a
 - each stat is a `ProfileStat(label: ..., value: ...)` using the same three
   captions (`l10n.likedSongs`, `l10n.playlists`, `l10n.minutes`).
 
-- [ ] **Step 4: Rename the destination and group the sections**
+- [x] **Step 4: Rename the destination and group the sections**
 
 In `_getNavigationItems`, replace the Settings item with:
 
@@ -428,7 +428,7 @@ In `SettingsPage.build`, use `title: context.l10n!.profile` and insert
 existing groups/actions. If a section header already says "Preferences", leave
 it; the header card supplies the identity layer, not a second settings stack.
 
-- [ ] **Step 5: Run tests and analyze**
+- [x] **Step 5: Run tests and analyze**
 
 Run: `flutter test test/profile_summary_test.dart`
 Expected: PASS (2 tests).
@@ -439,7 +439,7 @@ Expected: completes without missing-key errors.
 Run: `flutter analyze --no-pub`
 Expected: no new issues.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/widgets/profile_stat.dart lib/screens/bottom_navigation_page.dart lib/screens/settings_page.dart lib/localization/app_en.arb test/profile_summary_test.dart
@@ -453,14 +453,14 @@ git commit -m "feat: turn settings into a profile destination"
 **Files:**
 - No source changes unless verification finds a defect.
 
-- [ ] **Step 1: Run the full checks**
+- [x] **Step 1: Run the full checks**
 
 Run: `flutter gen-l10n`
 Run: `flutter analyze --no-pub`
 Run: `flutter test`
 Expected: all clean.
 
-- [ ] **Step 2: Build and install**
+- [x] **Step 2: Build and install**
 
 ```powershell
 flutter build apk --debug --flavor github --no-pub --target-platform android-arm64
@@ -468,7 +468,7 @@ adb install -r build\app\outputs\flutter-apk\app-github-debug.apk
 adb shell monkey -p com.gokadzev.musify.debug 1
 ```
 
-- [ ] **Step 3: Capture the four proof states**
+- [x] **Step 3: Capture the four proof states**
 
 1. Home in dark mode (black canvas, green selected chip).
 2. Now Playing on a light/bright cover.
@@ -480,14 +480,14 @@ Save to `C:\Users\clarisse sibug\AppData\Local\Temp\opencode\res_after_dark_*.pn
 and inspect each. If the player text is not readable on a bright cover, return to
 Task 2 and lower the luminance ceiling, then rebuild.
 
-- [ ] **Step 4: Commit any verification fixes**
+- [x] **Step 4: Commit any verification fixes**
 
 ```bash
 git add -A
 git commit -m "fix: polish after-dark contrast on device"
 ```
 
-- [ ] **Step 5: Push to the fork**
+- [x] **Step 5: Push to the fork**
 
 Use the PAT from `C:\Users\clarisse sibug\OneDrive\Desktop\CARL\token for all.txt`
 without printing it:
@@ -500,7 +500,7 @@ Remove-Variable token
 
 Expected: `main -> main` accepted.
 
-- [ ] **Step 6: Confirm the remote**
+- [x] **Step 6: Confirm the remote**
 
 ```powershell
 git ls-remote "https://github.com/carlsibug98-spec/musify.git" refs/heads/main

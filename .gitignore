@@ -50,3 +50,6 @@ lib/localization/app_*.dart
 
 # Generated untranslated messages file
 lib/localization/untranslated.json
+
+# Local SDD progress ledgers
+.superpowers/
