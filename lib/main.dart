@@ -258,6 +258,14 @@ class _MusifyState extends State<Musify> with WidgetsBindingObserver {
             : Brightness.dark,
       ),
       child: MaterialApp.router(
+        // The Daylight token layer is static, so swapping brightness or the
+        // accent must recreate the themed subtree. Keying the app keeps every
+        // screen, tab bar and mini player in sync instead of leaving widgets
+        // that read the tokens directly on their previous colours.
+        key: ValueKey(
+          '${brightness.name}-${useSystemColor.value}-'
+          '${primaryColorSetting.toARGB32()}',
+        ),
         // Daylight is a single concept with a real light and dark appearance.
         // Both resolve from the same tokens; the stored theme setting picks.
         themeMode: themeMode,

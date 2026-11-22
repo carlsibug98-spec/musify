@@ -19,6 +19,8 @@
  *     please visit: https://github.com/gokadzev/Musify
  */
 
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 class MarqueeWidget extends StatefulWidget {
@@ -54,7 +56,13 @@ class _MarqueeWidgetState extends State<MarqueeWidget>
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startAnimation());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // The controller's viewport metrics only exist after the first layout,
+      // so rebuild once to paint the clipped-edge fade before any scrolling.
+      setState(() {});
+      _startAnimation();
+    });
   }
 
   @override
@@ -67,14 +75,71 @@ class _MarqueeWidgetState extends State<MarqueeWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final viewport = SingleChildScrollView(
+      scrollDirection: widget.direction,
+      controller: _scrollController,
+      physics: widget.manualScrollEnabled
+          ? const AlwaysScrollableScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
+      child: widget.child,
+    );
+
     return RepaintBoundary(
-      child: SingleChildScrollView(
-        scrollDirection: widget.direction,
-        controller: _scrollController,
-        physics: widget.manualScrollEnabled
-            ? const AlwaysScrollableScrollPhysics()
-            : const NeverScrollableScrollPhysics(),
-        child: widget.child,
+      child: AnimatedBuilder(
+        animation: _scrollController,
+        builder: (context, child) {
+          if (!_scrollController.hasClients) return child!;
+          final position = _scrollController.position;
+          if (position.maxScrollExtent <= 0) return child!;
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              if (!width.isFinite || width <= 0) return child!;
+
+              // Soften the hard cut at whichever edge still has hidden text.
+              // Fading only the clipped side leaves the first character solid
+              // at rest and the last one solid once the title has scrolled.
+              final fade = math.min(24, width / 3);
+              final fadeLeft = position.pixels > 0.5;
+              final fadeRight =
+                  position.pixels < position.maxScrollExtent - 0.5;
+              if (!fadeLeft && !fadeRight) return child!;
+
+              return ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (rect) {
+                  final colors = <Color>[];
+                  final stops = <double>[];
+                  if (fadeLeft) {
+                    colors.add(Colors.transparent);
+                    stops.add(0);
+                    colors.add(Colors.white);
+                    stops.add(fade / rect.width);
+                  } else {
+                    colors.add(Colors.white);
+                    stops.add(0);
+                  }
+                  if (fadeRight) {
+                    colors.add(Colors.white);
+                    stops.add(1 - fade / rect.width);
+                    colors.add(Colors.transparent);
+                    stops.add(1);
+                  } else {
+                    colors.add(Colors.white);
+                    stops.add(1);
+                  }
+                  return LinearGradient(
+                    colors: colors,
+                    stops: stops,
+                  ).createShader(rect);
+                },
+                child: child,
+              );
+            },
+          );
+        },
+        child: viewport,
       ),
     );
   }

@@ -48,7 +48,8 @@ PersistentBottomSheetController? showCustomBottomSheet(
           Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 8),
             child: GestureDetector(
-              onTap: () => Navigator.pop(context),
+              key: const Key('daylightSheetHandle'),
+              onTap: closeCurrentBottomSheet,
               child: Container(
                 width: 40,
                 height: 4,
