@@ -50,22 +50,22 @@ abstract final class Daylight {
   static const _lightCardTint = Color(0xFFF1F3F8);
   static const _lightCardTintStrong = Color(0xFFE7EAF2);
 
-  // Ground — dark values (cool charcoal, keeps the same blue-grey family)
-  static const _darkGroundTop = Color(0xFF101319);
-  static const _darkGround = Color(0xFF0C0E13);
-  static const _darkGroundBottom = Color(0xFF080A0E);
+  // Ground — dark values (Spotify's black-first ladder)
+  static const _darkGroundTop = Color(0xFF121212);
+  static const _darkGround = Color(0xFF0B0B0B);
+  static const _darkGroundBottom = Color(0xFF000000);
 
   // Ink — dark values
-  static const _darkInk = Color(0xFFF4F6FA);
-  static const _darkMuted = Color(0xFFA8B0BE);
-  static const _darkFaint = Color(0xFF727B8B);
+  static const _darkInk = Color(0xFFFFFFFF);
+  static const _darkMuted = Color(0xFFB3B3B3);
+  static const _darkFaint = Color(0xFF7C7C7C);
 
   // Lines and surfaces — dark values
-  static const _darkLine = Color(0xFF232935);
-  static const _darkLineStrong = Color(0xFF363E4E);
-  static const _darkCard = Color(0xFF171B23);
-  static const _darkCardTint = Color(0xFF1E232D);
-  static const _darkCardTintStrong = Color(0xFF262C38);
+  static const _darkLine = Color(0xFF2A2A2A);
+  static const _darkLineStrong = Color(0xFF3E3E3E);
+  static const _darkCard = Color(0xFF181818);
+  static const _darkCardTint = Color(0xFF1F1F1F);
+  static const _darkCardTintStrong = Color(0xFF282828);
 
   static Color get groundTop => isDark ? _darkGroundTop : _lightGroundTop;
   static Color get ground => isDark ? _darkGround : _lightGround;
@@ -92,10 +92,14 @@ abstract final class Daylight {
 
   // Accent ----------------------------------------------------------------
 
-  /// The Daylight accent before the user picks one in Settings.
-  static const cobaltBase = Color(0xFF2743E8);
+  /// The Daylight accent before the user picks one in Settings. Dark mode
+  /// switches the default to the brand green so play controls and selected
+  /// chips read like streaming controls, not like links.
+  static const _lightAccent = Color(0xFF2743E8);
+  static const _darkAccent = Color(0xFF1ED760);
+  static Color get cobaltBase => isDark ? _darkAccent : _lightAccent;
 
-  /// The live accent. While "system color" is enabled the concept's cobalt
+  /// The live accent. While "system color" is enabled the concept's accent
   /// stays in place; a swatch or custom RGB color from Settings replaces it.
   static Color get cobalt =>
       useSystemColor.value ? cobaltBase : primaryColorSetting;
@@ -121,11 +125,18 @@ abstract final class Daylight {
   static Color get cobaltWash =>
       Color.alphaBlend(cobalt.withValues(alpha: 0.08), _surfaceBase);
 
+  /// Readable foreground for any accent fill. Uses WCAG contrast instead of a
+  /// luminance threshold so green (#1ED760) gets dark text while cobalt gets
+  /// white.
+  static Color onColor(Color background) {
+    final luminance = background.computeLuminance();
+    final whiteContrast = 1.05 / (luminance + 0.05);
+    final darkContrast = (luminance + 0.05) / 0.05;
+    return darkContrast > whiteContrast ? _lightInk : Colors.white;
+  }
+
   /// Readable foreground for the accent gradient and filled controls.
-  /// A light accent needs dark ink; a dark accent needs white. (_lightInk is
-  /// the near-black text color; _darkInk is the near-white one for dark mode.)
-  static Color get onAccent =>
-      cobalt.computeLuminance() > 0.52 ? _lightInk : Colors.white;
+  static Color get onAccent => onColor(cobalt);
 
   static LinearGradient get cobaltGradient => LinearGradient(
     begin: Alignment.topLeft,
@@ -199,13 +210,17 @@ abstract final class Daylight {
 
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: ink.withValues(alpha: 0.10),
+      color: (isDark ? Colors.black : ink).withValues(
+        alpha: isDark ? 0.55 : 0.10,
+      ),
       blurRadius: 24,
       offset: const Offset(0, 10),
       spreadRadius: -16,
     ),
     BoxShadow(
-      color: ink.withValues(alpha: 0.08),
+      color: (isDark ? Colors.black : ink).withValues(
+        alpha: isDark ? 0.35 : 0.08,
+      ),
       blurRadius: 6,
       offset: const Offset(0, 2),
       spreadRadius: -3,
@@ -214,13 +229,17 @@ abstract final class Daylight {
 
   static List<BoxShadow> get floatingShadow => [
     BoxShadow(
-      color: ink.withValues(alpha: 0.18),
+      color: (isDark ? Colors.black : ink).withValues(
+        alpha: isDark ? 0.62 : 0.18,
+      ),
       blurRadius: 28,
       offset: const Offset(0, 12),
       spreadRadius: -14,
     ),
     BoxShadow(
-      color: ink.withValues(alpha: 0.07),
+      color: (isDark ? Colors.black : ink).withValues(
+        alpha: isDark ? 0.45 : 0.07,
+      ),
       blurRadius: 8,
       offset: const Offset(0, 2),
       spreadRadius: -2,
@@ -421,7 +440,7 @@ abstract final class Daylight {
         trackColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
               ? cobalt
-              : const Color(0xFFD6DAE3);
+              : (isDark ? _darkCardTintStrong : const Color(0xFFD6DAE3));
         }),
         trackOutlineColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected) ? cobalt : lineStrong;
