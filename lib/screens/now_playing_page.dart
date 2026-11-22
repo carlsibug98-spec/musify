@@ -36,6 +36,7 @@ import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/now_playing/bottom_actions_row.dart';
 import 'package:musify/widgets/now_playing/lyrics_preview_card.dart';
 import 'package:musify/widgets/now_playing/now_playing_artwork.dart';
+import 'package:musify/widgets/now_playing/now_playing_backdrop.dart';
 import 'package:musify/widgets/now_playing/now_playing_controls.dart';
 import 'package:musify/widgets/overflow_menu_button.dart';
 import 'package:musify/widgets/popup_menu_item.dart';
@@ -63,37 +64,40 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: StreamBuilder<MediaItem?>(
-          stream: audioHandler.mediaItem,
-          builder: (context, snapshot) {
-            if (snapshot.data == null || !snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final metadata = snapshot.data!;
-            return Column(
-              children: [
-                _buildAppBar(context, metadata),
-                Expanded(
-                  child: isLargeScreen
-                      ? _DesktopLayout(
-                          metadata: metadata,
-                          size: size,
-                          adjustedIconSize: baseIconSize,
-                          adjustedMiniIconSize: miniIconSize,
-                        )
-                      : _MobileLayout(
-                          metadata: metadata,
-                          size: size,
-                          adjustedIconSize: baseIconSize,
-                          adjustedMiniIconSize: miniIconSize,
-                          isLargeScreen: isLargeScreen,
-                        ),
-                ),
-              ],
-            );
-          },
-        ),
+      body: StreamBuilder<MediaItem?>(
+        stream: audioHandler.mediaItem,
+        builder: (context, snapshot) {
+          if (snapshot.data == null || !snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final metadata = snapshot.data!;
+          return NowPlayingBackdrop(
+            metadata: metadata,
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildAppBar(context, metadata),
+                  Expanded(
+                    child: isLargeScreen
+                        ? _DesktopLayout(
+                            metadata: metadata,
+                            size: size,
+                            adjustedIconSize: baseIconSize,
+                            adjustedMiniIconSize: miniIconSize,
+                          )
+                        : _MobileLayout(
+                            metadata: metadata,
+                            size: size,
+                            adjustedIconSize: baseIconSize,
+                            adjustedMiniIconSize: miniIconSize,
+                            isLargeScreen: isLargeScreen,
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
