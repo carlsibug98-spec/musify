@@ -133,3 +133,27 @@ Color artworkTintedSurface(Color? tint) {
     Daylight.card,
   );
 }
+
+/// Top colour of the full-player backdrop. The tint is clamped until its
+/// relative luminance is at most 0.06, which keeps white text at >= 4.5:1
+/// even when the cover is a bright yellow or white.
+Color artworkBackdropTop(Color? tint) {
+  if (!Daylight.isDark || tint == null) return Daylight.groundTop;
+
+  final hsl = HSLColor.fromColor(tint);
+  var tuned = hsl
+      .withSaturation((hsl.saturation * 0.72).clamp(0.0, 1.0))
+      .withLightness(0.20)
+      .toColor();
+
+  var guard = 0;
+  while (tuned.computeLuminance() > 0.06 && guard < 24) {
+    tuned = Color.lerp(tuned, const Color(0xFF000000), 0.14)!;
+    guard++;
+  }
+  return tuned;
+}
+
+/// Bottom colour of the full-player backdrop.
+Color artworkBackdropBottom() =>
+    Daylight.isDark ? Daylight.groundBottom : Daylight.ground;
