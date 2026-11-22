@@ -26,6 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:musify/localization/app_localizations.dart';
+import 'package:musify/services/common_services.dart';
 import 'package:musify/widgets/now_playing/saved_in_sheet.dart';
 
 void main() {
@@ -55,6 +56,10 @@ void main() {
       artist: 'Demo artist',
       extras: {'ytid': 'demo'},
     );
+    userLikedSongsList.value = [
+      {'ytid': 'demo'},
+    ];
+    addTearDown(() => userLikedSongsList.value = []);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -80,5 +85,6 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Saved in'), findsOneWidget);
     expect(find.text('Demo song'), findsOneWidget);
+    expect(find.text('1 song'), findsOneWidget);
   });
 }

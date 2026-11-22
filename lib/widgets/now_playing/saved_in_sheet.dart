@@ -32,6 +32,13 @@ import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/mediaitem.dart';
 import 'package:musify/utilities/playlist_dialogs.dart';
 
+/// One song is singular; the rest of the app uses the plural key for counts.
+String _songCountLabel(BuildContext context, int count) {
+  final l10n = context.l10n!;
+  final noun = count == 1 ? l10n.song : l10n.songs;
+  return '$count ${noun.toLowerCase()}';
+}
+
 /// Spotify-style "Saved in" sheet. It lists every place the current song can
 /// be saved (Liked Songs plus each playlist) and toggles the song in place.
 class SavedInSheet extends StatelessWidget {
@@ -135,8 +142,10 @@ class SavedInSheet extends StatelessWidget {
                                 icon: FluentIcons.heart_24_regular,
                                 color: const Color(0xFF7C4DFF),
                                 title: l10n.likedSongs,
-                                subtitle:
-                                    '${likedSongs.length} ${l10n.songs.toLowerCase()}',
+                                subtitle: _songCountLabel(
+                                  context,
+                                  likedSongs.length,
+                                ),
                                 saved: isLiked,
                                 onTap: () {
                                   unawaited(
@@ -192,7 +201,7 @@ class SavedInSheet extends StatelessWidget {
       icon: FluentIcons.music_note_1_24_regular,
       color: Daylight.accent,
       title: playlist['title']?.toString() ?? l10n.playlist,
-      subtitle: '${songs.length} ${l10n.songs.toLowerCase()}',
+      subtitle: _songCountLabel(context, songs.length),
       saved: saved,
       onTap: () {
         if (saved) {
