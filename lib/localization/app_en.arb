@@ -232,6 +232,7 @@
   "playlistUpdated": "Playlist updated successfully",
   "playlists": "Playlists",
   "preferences": "Preferences",
+  "profile": "Profile",
   "provideIdOrNameError": "Please provide a YouTube ID or custom playlist name",
   "pureBlackTheme": "Pure black theme",
   "pureBlackThemeDescription": "Use a true black background in dark mode for OLED displays.",

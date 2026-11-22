@@ -41,6 +41,7 @@ import 'package:musify/theme/daylight.dart';
 import 'package:musify/utilities/flutter_bottom_sheet.dart';
 import 'package:musify/utilities/flutter_toast.dart';
 import 'package:musify/utilities/language_utils.dart';
+import 'package:musify/utilities/listening_stats_utils.dart';
 import 'package:musify/utilities/platform_utils.dart';
 import 'package:musify/utilities/url_launcher.dart';
 import 'package:musify/widgets/bottom_sheet_bar.dart';
@@ -48,6 +49,7 @@ import 'package:musify/widgets/confirmation_dialog.dart';
 import 'package:musify/widgets/custom_bar.dart';
 import 'package:musify/widgets/daylight/daylight_ui.dart';
 import 'package:musify/widgets/mini_player_bottom_space.dart';
+import 'package:musify/widgets/profile_stat.dart';
 import 'package:musify/widgets/section_header.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -62,6 +64,8 @@ class SettingsPage extends StatelessWidget {
     final content = Column(
       children: <Widget>[
         const SizedBox(height: 2),
+        _buildProfileHeader(context),
+        const SizedBox(height: 16),
         _buildPreferencesSection(
           context,
           primaryColor,
@@ -85,7 +89,7 @@ class SettingsPage extends StatelessWidget {
       body: Column(
         children: [
           DaylightAppBar(
-            title: context.l10n!.settings,
+            title: context.l10n!.profile,
             actions: [
               DaylightCircleButton(
                 icon: FluentIcons.question_circle_24_regular,
@@ -110,6 +114,114 @@ class SettingsPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context) {
+    final minutes = monthDisplayMinutes(
+      listeningStatsService.monthStats(listeningStatsMonthKey(DateTime.now())),
+    );
+
+    return DaylightCard(
+      radius: 18,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Daylight.cobaltSoft,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Daylight.cobalt.withValues(alpha: 0.35),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const DaylightBrandMark(size: 34),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Resona',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Daylight.display(20, height: 1),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      context.l10n!.profile,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Daylight.ui(11.5, color: Daylight.muted),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Daylight.cobalt,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Daylight.cobalt.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ValueListenableBuilder<List>(
+                  valueListenable: userLikedSongsList,
+                  builder: (context, songs, _) => ProfileStat(
+                    label: context.l10n!.likedSongs,
+                    value: songs.length,
+                  ),
+                ),
+              ),
+              _profileDivider(),
+              Expanded(
+                child: ValueListenableBuilder<List<Map>>(
+                  valueListenable: userLikedPlaylists,
+                  builder: (context, playlists, _) => ProfileStat(
+                    label: context.l10n!.playlists,
+                    value: playlists.length,
+                  ),
+                ),
+              ),
+              _profileDivider(),
+              Expanded(
+                child: ProfileStat(
+                  label: context.l10n!.minutes,
+                  value: minutes,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _profileDivider() {
+    return Container(
+      width: 1,
+      height: 30,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      color: Daylight.line,
     );
   }
 

@@ -212,9 +212,9 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
         shellIndex: 2,
       ),
       _NavigationItem(
-        icon: FluentIcons.settings_24_regular,
-        selectedIcon: FluentIcons.settings_24_filled,
-        label: context.l10n?.settings ?? 'Settings',
+        icon: FluentIcons.person_circle_24_regular,
+        selectedIcon: FluentIcons.person_circle_24_filled,
+        label: context.l10n?.profile ?? 'Profile',
         shellIndex: 3,
       ),
     ]);
